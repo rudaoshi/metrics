@@ -13,7 +13,7 @@
 # limitations under the License.
 from typing import Any, Callable, Dict, Optional
 
-from torch import Tensor, tensor
+from pangu.core.backend import  Tensor, tensor
 
 from torchmetrics.functional.audio.pit import pit
 from torchmetrics.metric import Metric
@@ -53,12 +53,12 @@ class PIT(Metric):
         average PIT metric
 
     Example:
-        >>> import torch
+        >>> import pangu.core.backend as B
         >>> from torchmetrics import PIT
         >>> from torchmetrics.functional import si_snr
-        >>> _ = torch.manual_seed(42)
-        >>> preds = torch.randn(3, 2, 5) # [batch, spk, time]
-        >>> target = torch.randn(3, 2, 5) # [batch, spk, time]
+        >>> _ = B.manual_seed(42)
+        >>> preds = B.randn(3, 2, 5) # [batch, spk, time]
+        >>> target = B.randn(3, 2, 5) # [batch, spk, time]
         >>> pit = PIT(si_snr, 'max')
         >>> pit(preds, target)
         tensor(-2.1065)

@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Tuple, Union
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.utilities.checks import _input_format_classification
 
@@ -49,8 +49,8 @@ def _hamming_distance_compute(correct: Tensor, total: Union[int, Tensor]) -> Ten
         total: Total number of predictions
 
     Example:
-        >>> target = torch.tensor([[0, 1], [1, 1]])
-        >>> preds = torch.tensor([[0, 1], [0, 1]])
+        >>> target = B.tensor([[0, 1], [1, 1]])
+        >>> preds = B.tensor([[0, 1], [0, 1]])
         >>> correct, total = _hamming_distance_update(preds, target)
         >>> _hamming_distance_compute(correct, total)
         tensor(0.2500)
@@ -86,8 +86,8 @@ def hamming_distance(preds: Tensor, target: Tensor, threshold: float = 0.5) -> T
 
     Example:
         >>> from torchmetrics.functional import hamming_distance
-        >>> target = torch.tensor([[0, 1], [1, 1]])
-        >>> preds = torch.tensor([[0, 1], [0, 1]])
+        >>> target = B.tensor([[0, 1], [1, 1]])
+        >>> preds = B.tensor([[0, 1], [0, 1]])
         >>> hamming_distance(preds, target)
         tensor(0.2500)
 

@@ -1,6 +1,7 @@
 r"""Root package info."""
 import logging as __logging
 import os
+import sys
 
 from torchmetrics.__about__ import *  # noqa: F401, F403
 
@@ -40,7 +41,7 @@ from torchmetrics.classification import (  # noqa: E402
     StatScores,
 )
 from torchmetrics.collections import MetricCollection  # noqa: E402
-from torchmetrics.image import FID, IS, KID, LPIPS, PSNR, SSIM  # noqa: E402
+#from torchmetrics.image import FID, IS, KID, LPIPS, PSNR, SSIM  # noqa: E402
 from torchmetrics.metric import Metric  # noqa: E402
 from torchmetrics.regression import (  # noqa: E402
     CosineSimilarity,
@@ -89,14 +90,14 @@ __all__ = [
     "ExplainedVariance",
     "F1",
     "FBeta",
-    "FID",
+#    "FID",
     "HammingDistance",
     "Hinge",
     "IoU",
-    "IS",
-    "KID",
+#    "IS",
+#    "KID",
     "KLDivergence",
-    "LPIPS",
+#    "LPIPS",
     "MatthewsCorrcoef",
     "MaxMetric",
     "MeanAbsoluteError",
@@ -114,7 +115,7 @@ __all__ = [
     "PIT",
     "Precision",
     "PrecisionRecallCurve",
-    "PSNR",
+#    "PSNR",
     "R2Score",
     "Recall",
     "RetrievalFallOut",
@@ -133,7 +134,7 @@ __all__ = [
     "SNR",
     "SpearmanCorrcoef",
     "Specificity",
-    "SSIM",
+#    "SSIM",
     "StatScores",
     "STOI",
     "SumMetric",

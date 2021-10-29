@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Any, List, Optional, Sequence
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.functional.image.ssim import _ssim_compute, _ssim_update
 from torchmetrics.metric import Metric
@@ -43,7 +43,7 @@ class SSIM(Metric):
 
     Example:
         >>> from torchmetrics import SSIM
-        >>> preds = torch.rand([16, 1, 16, 16])
+        >>> preds = B.rand([16, 1, 16, 16])
         >>> target = preds * 0.75
         >>> ssim = SSIM()
         >>> ssim(preds, target)

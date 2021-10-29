@@ -13,15 +13,15 @@
 # limitations under the License.
 from typing import Optional
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.utilities.checks import _check_retrieval_functional_inputs
 
 
 def _dcg(target: Tensor) -> Tensor:
     """Computes Discounted Cumulative Gain for input tensor."""
-    denom = torch.log2(torch.arange(target.shape[-1], device=target.device) + 2.0)
+    denom = B.log2(B.arange(target.shape[-1], device=target.device) + 2.0)
     return (target / denom).sum(dim=-1)
 
 
@@ -46,8 +46,8 @@ def retrieval_normalized_dcg(preds: Tensor, target: Tensor, k: Optional[int] = N
 
     Example:
         >>> from torchmetrics.functional import retrieval_normalized_dcg
-        >>> preds = torch.tensor([.1, .2, .3, 4, 70])
-        >>> target = torch.tensor([10, 0, 0, 1, 5])
+        >>> preds = B.tensor([.1, .2, .3, 4, 70])
+        >>> target = B.tensor([10, 0, 0, 1, 5])
         >>> retrieval_normalized_dcg(preds, target)
         tensor(0.6957)
     """
@@ -58,8 +58,8 @@ def retrieval_normalized_dcg(preds: Tensor, target: Tensor, k: Optional[int] = N
     if not (isinstance(k, int) and k > 0):
         raise ValueError("`k` has to be a positive integer or None")
 
-    sorted_target = target[torch.argsort(preds, dim=-1, descending=True)][:k]
-    ideal_target = torch.sort(target, descending=True)[0][:k]
+    sorted_target = target[B.argsort(preds, dim=-1, descending=True)][:k]
+    ideal_target = B.sort(target, descending=True)[0][:k]
 
     ideal_dcg = _dcg(ideal_target)
     target_dcg = _dcg(sorted_target)

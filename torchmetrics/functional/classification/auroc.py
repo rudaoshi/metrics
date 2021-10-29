@@ -14,8 +14,8 @@
 import warnings
 from typing import Optional, Sequence, Tuple
 
-import torch
-from torch import Tensor, tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor, tensor
 
 from torchmetrics.functional.classification.auc import _auc_compute_without_check
 from torchmetrics.functional.classification.roc import roc
@@ -75,19 +75,19 @@ def _auroc_compute(
 
     Example:
         >>> # binary case
-        >>> preds = torch.tensor([0.13, 0.26, 0.08, 0.19, 0.34])
-        >>> target = torch.tensor([0, 0, 1, 1, 1])
+        >>> preds = B.tensor([0.13, 0.26, 0.08, 0.19, 0.34])
+        >>> target = B.tensor([0, 0, 1, 1, 1])
         >>> preds, target, mode = _auroc_update(preds, target)
         >>> _auroc_compute(preds, target, mode, pos_label=1)
         tensor(0.5000)
 
         >>> # multiclass case
-        >>> preds = torch.tensor([[0.90, 0.05, 0.05],
+        >>> preds = B.tensor([[0.90, 0.05, 0.05],
         ...                       [0.05, 0.90, 0.05],
         ...                       [0.05, 0.05, 0.90],
         ...                       [0.85, 0.05, 0.10],
         ...                       [0.10, 0.10, 0.80]])
-        >>> target = torch.tensor([0, 1, 1, 2, 2])
+        >>> target = B.tensor([0, 1, 1, 2, 2])
         >>> preds, target, mode = _auroc_update(preds, target)
         >>> _auroc_compute(preds, target, mode, num_classes=3)
         tensor(0.7778)
@@ -104,7 +104,7 @@ def _auroc_compute(
 
         if _TORCH_LOWER_1_6:
             raise RuntimeError(
-                "`max_fpr` argument requires `torch.bucketize` which" " is not available below PyTorch version 1.6"
+                "`max_fpr` argument requires `B.bucketize` which" " is not available below PyTorch version 1.6"
             )
 
         # max_fpr parameter is only support for binary
@@ -133,17 +133,17 @@ def _auroc_compute(
         if mode != DataType.BINARY:
             if num_classes is None:
                 raise ValueError("Detected input to `multiclass` but you did not provide `num_classes` argument")
-            if average == AverageMethod.WEIGHTED and len(torch.unique(target)) < num_classes:
+            if average == AverageMethod.WEIGHTED and len(B.unique(target)) < num_classes:
                 # If one or more classes has 0 observations, we should exclude them, as its weight will be 0
-                target_bool_mat = torch.zeros((len(target), num_classes), dtype=bool)
-                target_bool_mat[torch.arange(len(target)), target.long()] = 1
+                target_bool_mat = B.zeros((len(target), num_classes), dtype=bool)
+                target_bool_mat[B.arange(len(target)), target.long()] = 1
                 class_observed = target_bool_mat.sum(axis=0) > 0
                 for c in range(num_classes):
                     if not class_observed[c]:
                         warnings.warn(f"Class {c} had 0 observations, omitted from AUROC calculation", UserWarning)
                 preds = preds[:, class_observed]
                 target = target_bool_mat[:, class_observed]
-                target = torch.where(target)[1]
+                target = B.where(target)[1]
                 num_classes = class_observed.sum()
                 if num_classes == 1:
                     raise ValueError("Found 1 non-empty class in `multiclass` AUROC calculation")
@@ -161,13 +161,13 @@ def _auroc_compute(
             if average == AverageMethod.NONE:
                 return tensor(auc_scores)
             if average == AverageMethod.MACRO:
-                return torch.mean(torch.stack(auc_scores))
+                return B.mean(B.stack(auc_scores))
             if average == AverageMethod.WEIGHTED:
                 if mode == DataType.MULTILABEL:
-                    support = torch.sum(target, dim=0)
+                    support = B.sum(target, dim=0)
                 else:
-                    support = torch.bincount(target.flatten(), minlength=num_classes)
-                return torch.sum(torch.stack(auc_scores) * support / support.sum())
+                    support = B.bincount(target.flatten(), minlength=num_classes)
+                return B.sum(B.stack(auc_scores) * support / support.sum())
 
             allowed_average = (AverageMethod.NONE.value, AverageMethod.MACRO.value, AverageMethod.WEIGHTED.value)
             raise ValueError(
@@ -179,11 +179,11 @@ def _auroc_compute(
     _device = fpr.device if isinstance(fpr, Tensor) else fpr[0].device
     max_area: Tensor = tensor(max_fpr, device=_device)
     # Add a single point at max_fpr and interpolate its tpr value
-    stop = torch.bucketize(max_area, fpr, out_int32=True, right=True)
+    stop = B.bucketize(max_area, fpr, out_int32=True, right=True)
     weight = (max_area - fpr[stop - 1]) / (fpr[stop] - fpr[stop - 1])
-    interp_tpr: Tensor = torch.lerp(tpr[stop - 1], tpr[stop], weight)
-    tpr = torch.cat([tpr[:stop], interp_tpr.view(1)])
-    fpr = torch.cat([fpr[:stop], max_area.view(1)])
+    interp_tpr: Tensor = B.lerp(tpr[stop - 1], tpr[stop], weight)
+    tpr = B.cat([tpr[:stop], interp_tpr.view(1)])
+    fpr = B.cat([fpr[:stop], max_area.view(1)])
 
     # Compute partial AUC
     partial_auc = _auc_compute_without_check(fpr, tpr, 1.0)
@@ -228,7 +228,7 @@ def auroc(
         ValueError:
             If ``max_fpr`` is not a ``float`` in the range ``(0, 1]``.
         RuntimeError:
-            If ``PyTorch version`` is ``below 1.6`` since max_fpr requires `torch.bucketize`
+            If ``PyTorch version`` is ``below 1.6`` since max_fpr requires `B.bucketize`
             which is not available below 1.6.
         ValueError:
             If ``max_fpr`` is not set to ``None`` and the mode is ``not binary``
@@ -238,18 +238,18 @@ def auroc(
 
     Example (binary case):
         >>> from torchmetrics.functional import auroc
-        >>> preds = torch.tensor([0.13, 0.26, 0.08, 0.19, 0.34])
-        >>> target = torch.tensor([0, 0, 1, 1, 1])
+        >>> preds = B.tensor([0.13, 0.26, 0.08, 0.19, 0.34])
+        >>> target = B.tensor([0, 0, 1, 1, 1])
         >>> auroc(preds, target, pos_label=1)
         tensor(0.5000)
 
     Example (multiclass case):
-        >>> preds = torch.tensor([[0.90, 0.05, 0.05],
+        >>> preds = B.tensor([[0.90, 0.05, 0.05],
         ...                       [0.05, 0.90, 0.05],
         ...                       [0.05, 0.05, 0.90],
         ...                       [0.85, 0.05, 0.10],
         ...                       [0.10, 0.10, 0.80]])
-        >>> target = torch.tensor([0, 1, 1, 2, 2])
+        >>> target = B.tensor([0, 1, 1, 2, 2])
         >>> auroc(preds, target, num_classes=3)
         tensor(0.7778)
     """

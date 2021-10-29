@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Any, Callable, Optional
 
-import torch
-from torch import Tensor, tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor, tensor
 
 from torchmetrics.functional.retrieval.fall_out import retrieval_fall_out
 from torchmetrics.retrieval.retrieval_metric import RetrievalMetric
@@ -103,9 +103,9 @@ class RetrievalFallOut(RetrievalMetric):
         for each group compute the `_metric` if the number of negative targets is at least 1, otherwise behave as
         specified by `self.empty_target_action`.
         """
-        indexes = torch.cat(self.indexes, dim=0)
-        preds = torch.cat(self.preds, dim=0)
-        target = torch.cat(self.target, dim=0)
+        indexes = B.cat(self.indexes, dim=0)
+        preds = B.cat(self.preds, dim=0)
+        target = B.cat(self.target, dim=0)
 
         res = []
         groups = get_group_indexes(indexes)
@@ -125,7 +125,7 @@ class RetrievalFallOut(RetrievalMetric):
                 # ensure list containt only float tensors
                 res.append(self._metric(mini_preds, mini_target))
 
-        return torch.stack([x.to(preds) for x in res]).mean() if res else tensor(0.0).to(preds)
+        return B.stack([x.to(preds) for x in res]).mean() if res else tensor(0.0).to(preds)
 
     def _metric(self, preds: Tensor, target: Tensor) -> Tensor:
         return retrieval_fall_out(preds, target, k=self.k)

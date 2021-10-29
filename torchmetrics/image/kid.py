@@ -13,9 +13,9 @@
 # limitations under the License.
 from typing import Any, Callable, List, Optional, Tuple, Union
 
-import torch
-from torch import Tensor
-from torch.nn import Module
+import pangu.core.backend as B
+from pangu.core.backend import Tensor
+from pangu.core.backend.nn import Module
 
 from torchmetrics.image.fid import NoTrainInceptionV3
 from torchmetrics.metric import Metric
@@ -28,8 +28,8 @@ def maximum_mean_discrepancy(k_xx: Tensor, k_xy: Tensor, k_yy: Tensor) -> Tensor
     """Adapted from `KID Score`_"""
     m = k_xx.shape[0]
 
-    diag_x = torch.diag(k_xx)
-    diag_y = torch.diag(k_yy)
+    diag_x = B.diag(k_xx)
+    diag_y = B.diag(k_yy)
 
     kt_xx_sums = k_xx.sum(dim=-1) - diag_x
     kt_yy_sums = k_yy.sum(dim=-1) - diag_y
@@ -148,13 +148,13 @@ class KID(Metric):
             If ``coef`` is not an float larger than 0
 
     Example:
-        >>> import torch
-        >>> _ = torch.manual_seed(123)
+        >>> import pangu.core.backend as B
+        >>> _ = B.manual_seed(123)
         >>> from torchmetrics import KID
         >>> kid = KID(subset_size=50)  # doctest: +SKIP
         >>> # generate two slightly overlapping image intensity distributions
-        >>> imgs_dist1 = torch.randint(0, 200, (100, 3, 299, 299), dtype=torch.uint8)  # doctest: +SKIP
-        >>> imgs_dist2 = torch.randint(100, 255, (100, 3, 299, 299), dtype=torch.uint8)  # doctest: +SKIP
+        >>> imgs_dist1 = B.randint(0, 200, (100, 3, 299, 299), dtype=B.uint8)  # doctest: +SKIP
+        >>> imgs_dist2 = B.randint(100, 255, (100, 3, 299, 299), dtype=B.uint8)  # doctest: +SKIP
         >>> kid.update(imgs_dist1, real=True)  # doctest: +SKIP
         >>> kid.update(imgs_dist2, real=False)  # doctest: +SKIP
         >>> kid_mean, kid_std = kid.compute()  # doctest: +SKIP
@@ -167,7 +167,7 @@ class KID(Metric):
 
     def __init__(
         self,
-        feature: Union[str, int, torch.nn.Module] = 2048,
+        feature: Union[str, int, B.nn.Module] = 2048,
         subsets: int = 100,
         subset_size: int = 1000,
         degree: int = 3,
@@ -266,12 +266,12 @@ class KID(Metric):
 
         kid_scores_ = []
         for _ in range(self.subsets):
-            perm = torch.randperm(n_samples_real)
+            perm = B.randperm(n_samples_real)
             f_real = real_features[perm[: self.subset_size]]
-            perm = torch.randperm(n_samples_fake)
+            perm = B.randperm(n_samples_fake)
             f_fake = fake_features[perm[: self.subset_size]]
 
             o = poly_mmd(f_real, f_fake, self.degree, self.gamma, self.coef)
             kid_scores_.append(o)
-        kid_scores = torch.stack(kid_scores_)
+        kid_scores = B.stack(kid_scores_)
         return kid_scores.mean(), kid_scores.std(unbiased=False)

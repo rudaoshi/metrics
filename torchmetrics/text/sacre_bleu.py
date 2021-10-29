@@ -16,7 +16,7 @@
 # Library Name: torchtext
 # Authors: torchtext authors and @sluks
 # Date: 2020-07-18
-# Link: https://pytorch.org/text/_modules/torchtext/data/metrics.html#bleu_score
+# Link: https://pyB.org/text/_modules/torchtext/data/metrics.html#bleu_score
 from typing import Any, Callable, Optional, Sequence
 
 from typing_extensions import Literal

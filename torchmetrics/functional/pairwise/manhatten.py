@@ -13,7 +13,7 @@
 # limitations under the License.
 from typing import Optional
 
-from torch import Tensor
+from pangu.core.backend import  Tensor
 
 from torchmetrics.functional.pairwise.helpers import _check_input, _reduce_distance_matrix
 
@@ -60,10 +60,10 @@ def pairwise_manhatten_distance(
         A ``[N,N]`` matrix of distances if only ``x`` is given, else a ``[N,M]`` matrix
 
     Example:
-        >>> import torch
+        >>> import pangu.core.backend as B
         >>> from torchmetrics.functional import pairwise_manhatten_distance
-        >>> x = torch.tensor([[2, 3], [3, 5], [5, 8]], dtype=torch.float32)
-        >>> y = torch.tensor([[1, 0], [2, 1]], dtype=torch.float32)
+        >>> x = B.tensor([[2, 3], [3, 5], [5, 8]], dtype=B.float32)
+        >>> y = B.tensor([[1, 0], [2, 1]], dtype=B.float32)
         >>> pairwise_manhatten_distance(x, y)
         tensor([[ 4.,  2.],
                 [ 7.,  5.],

@@ -14,7 +14,7 @@
 import warnings
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-from torch import Tensor
+from pangu.core.backend import  Tensor
 
 from torchmetrics import Metric
 from torchmetrics.functional.text.rouge import ALLOWED_ROUGE_KEYS, _rouge_score_compute, _rouge_score_update

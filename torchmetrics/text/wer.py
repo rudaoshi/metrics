@@ -15,8 +15,8 @@
 from typing import Any, Callable, List, Optional, Union
 from warnings import warn
 
-import torch
-from torch import Tensor, tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor, tensor
 
 from torchmetrics.functional.text.wer import _wer_compute, _wer_update
 from torchmetrics.metric import Metric
@@ -86,8 +86,8 @@ class WER(Metric):
         )
         if concatenate_texts is not None:
             warn("`concatenate_texts` has been deprecated in v0.6 and it will be removed in v0.7", DeprecationWarning)
-        self.add_state("errors", tensor(0, dtype=torch.float), dist_reduce_fx="sum")
-        self.add_state("total", tensor(0, dtype=torch.float), dist_reduce_fx="sum")
+        self.add_state("errors", tensor(0, dtype=B.float), dist_reduce_fx="sum")
+        self.add_state("total", tensor(0, dtype=B.float), dist_reduce_fx="sum")
 
     def update(self, predictions: Union[str, List[str]], references: Union[str, List[str]]) -> None:  # type: ignore
         """Store references/predictions for computing Word Error Rate scores.

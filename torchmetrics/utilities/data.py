@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Any, Callable, List, Mapping, Optional, Sequence, Union
 
-import torch
-from torch import Tensor, tensor
+import pangu.core.backend as B
+from pangu.core.backend import Tensor, tensor
 
 from torchmetrics.utilities.prints import rank_zero_warn
 
@@ -27,27 +27,27 @@ def dim_zero_cat(x: Union[Tensor, List[Tensor]]) -> Tensor:
     x = [y.unsqueeze(0) if y.numel() == 1 and y.ndim == 0 else y for y in x]
     if not x:  # empty list
         raise ValueError("No samples to concatenate")
-    return torch.cat(x, dim=0)
+    return B.cat(x, dim=0)
 
 
 def dim_zero_sum(x: Tensor) -> Tensor:
     """summation along the zero dimension."""
-    return torch.sum(x, dim=0)
+    return B.sum(x, dim=0)
 
 
 def dim_zero_mean(x: Tensor) -> Tensor:
     """average along the zero dimension."""
-    return torch.mean(x, dim=0)
+    return B.mean(x, dim=0)
 
 
 def dim_zero_max(x: Tensor) -> Tensor:
     """max along the zero dimension."""
-    return torch.max(x, dim=0).values
+    return B.max(x, dim=0).values
 
 
 def dim_zero_min(x: Tensor) -> Tensor:
     """min along the zero dimension."""
-    return torch.min(x, dim=0).values
+    return B.min(x, dim=0).values
 
 
 def _flatten(x: Sequence) -> list:
@@ -68,7 +68,7 @@ def to_onehot(
         A sparse label tensor with shape [N, C, d1, d2, ...]
 
     Example:
-        >>> x = torch.tensor([1, 2, 3])
+        >>> x = B.tensor([1, 2, 3])
         >>> to_onehot(x)
         tensor([[0, 1, 0, 0],
                 [0, 0, 1, 0],
@@ -77,7 +77,7 @@ def to_onehot(
     if num_classes is None:
         num_classes = int(label_tensor.max().detach().item() + 1)
 
-    tensor_onehot = torch.zeros(
+    tensor_onehot = B.zeros(
         label_tensor.shape[0],
         num_classes,
         *label_tensor.shape[1:],
@@ -98,15 +98,15 @@ def select_topk(prob_tensor: Tensor, topk: int = 1, dim: int = 1) -> Tensor:
         dim: dimension on which to compare entries
 
     Returns:
-        A binary tensor of the same shape as the input tensor of type torch.int32
+        A binary tensor of the same shape as the input tensor of type B.int32
 
     Example:
-        >>> x = torch.tensor([[1.1, 2.0, 3.0], [2.0, 1.0, 0.5]])
+        >>> x = B.tensor([[1.1, 2.0, 3.0], [2.0, 1.0, 0.5]])
         >>> select_topk(x, topk=2)
         tensor([[0, 1, 1],
-                [1, 1, 0]], dtype=torch.int32)
+                [1, 1, 0]], dtype=B.int32)
     """
-    zeros = torch.zeros_like(prob_tensor)
+    zeros = B.zeros_like(prob_tensor)
     if topk == 1:  # argmax has better performance than topk
         topk_tensor = zeros.scatter(dim, prob_tensor.argmax(dim=dim, keepdim=True), 1.0)
     else:
@@ -125,11 +125,11 @@ def to_categorical(x: Tensor, argmax_dim: int = 1) -> Tensor:
         A tensor with categorical labels [N, d2, ...]
 
     Example:
-        >>> x = torch.tensor([[0.2, 0.5], [0.9, 0.1]])
+        >>> x = B.tensor([[0.2, 0.5], [0.9, 0.1]])
         >>> to_categorical(x)
         tensor([1, 0])
     """
-    return torch.argmax(x, dim=argmax_dim)
+    return B.argmax(x, dim=argmax_dim)
 
 
 def get_num_classes(
@@ -186,7 +186,7 @@ def apply_to_collection(
         the resulting collection
 
     Example:
-        >>> apply_to_collection(torch.tensor([8, 0, 2, 6, 7]), dtype=Tensor, function=lambda x: x ** 2)
+        >>> apply_to_collection(B.tensor([8, 0, 2, 6, 7]), dtype=Tensor, function=lambda x: x ** 2)
         tensor([64,  0,  4, 36, 49])
         >>> apply_to_collection([8, 0, 2, 6, 7], dtype=int, function=lambda x: x ** 2)
         [64, 0, 4, 36, 49]
@@ -214,17 +214,17 @@ def apply_to_collection(
 
 
 def get_group_indexes(indexes: Tensor) -> List[Tensor]:
-    """Given an integer `torch.Tensor` `indexes`, return a `torch.Tensor` of indexes for each different value in
+    """Given an integer `B.Tensor` `indexes`, return a `B.Tensor` of indexes for each different value in
     `indexes`.
 
     Args:
-        indexes: a `torch.Tensor`
+        indexes: a `B.Tensor`
 
     Return:
-        A list of integer `torch.Tensor`s
+        A list of integer `B.Tensor`s
 
     Example:
-        >>> indexes = torch.tensor([0, 0, 0, 1, 1, 1, 1])
+        >>> indexes = B.tensor([0, 0, 0, 1, 1, 1, 1])
         >>> get_group_indexes(indexes)
         [tensor([0, 1, 2]), tensor([3, 4, 5, 6])]
     """
@@ -237,4 +237,4 @@ def get_group_indexes(indexes: Tensor) -> List[Tensor]:
         else:
             res[_id] = [i]
 
-    return [tensor(x, dtype=torch.long) for x in res.values()]
+    return [tensor(x, dtype=B.long) for x in res.values()]

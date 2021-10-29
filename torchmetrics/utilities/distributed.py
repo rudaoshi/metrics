@@ -13,9 +13,9 @@
 # limitations under the License.
 from typing import Any, List, Optional
 
-import torch
-import torch.nn.functional as F
-from torch import Tensor
+import pangu.core.backend as B
+#import pangu.core.backend.nn.functional as F
+from pangu.core.backend import Tensor
 
 
 def reduce(to_reduce: Tensor, reduction: str) -> Tensor:
@@ -32,11 +32,11 @@ def reduce(to_reduce: Tensor, reduction: str) -> Tensor:
         ValueError if an invalid reduction parameter was given
     """
     if reduction == "elementwise_mean":
-        return torch.mean(to_reduce)
+        return B.mean(to_reduce)
     if reduction == "none":
         return to_reduce
     if reduction == "sum":
-        return torch.sum(to_reduce)
+        return B.sum(to_reduce)
     raise ValueError("Reduction parameter unknown.")
 
 
@@ -65,7 +65,7 @@ def class_reduce(num: Tensor, denom: Tensor, weights: Tensor, class_reduction: s
     """
     valid_reduction = ("micro", "macro", "weighted", "none", None)
     if class_reduction == "micro":
-        fraction = torch.sum(num) / torch.sum(denom)
+        fraction = B.sum(num) / B.sum(denom)
     else:
         fraction = num / denom
 
@@ -76,9 +76,9 @@ def class_reduce(num: Tensor, denom: Tensor, weights: Tensor, class_reduction: s
     if class_reduction == "micro":
         return fraction
     if class_reduction == "macro":
-        return torch.mean(fraction)
+        return B.mean(fraction)
     if class_reduction == "weighted":
-        return torch.sum(fraction * (weights.float() / torch.sum(weights)))
+        return B.sum(fraction * (weights.float() / B.sum(weights)))
     if class_reduction == "none" or class_reduction is None:
         return fraction
 
@@ -88,8 +88,8 @@ def class_reduce(num: Tensor, denom: Tensor, weights: Tensor, class_reduction: s
 
 
 def _simple_gather_all_tensors(result: Tensor, group: Any, world_size: int) -> List[Tensor]:
-    gathered_result = [torch.zeros_like(result) for _ in range(world_size)]
-    torch.distributed.all_gather(gathered_result, result, group)
+    gathered_result = [B.zeros_like(result) for _ in range(world_size)]
+    B.distributed.all_gather(gathered_result, result, group)
     return gathered_result
 
 
@@ -107,23 +107,23 @@ def gather_all_tensors(result: Tensor, group: Optional[Any] = None) -> List[Tens
             gathered_result[i] corresponds to result tensor from process i
     """
     if group is None:
-        group = torch.distributed.group.WORLD
+        group = B.distributed.group.WORLD
 
     # convert tensors to contiguous format
     result = result.contiguous()
 
-    world_size = torch.distributed.get_world_size(group)
-    torch.distributed.barrier(group=group)
+    world_size = B.distributed.get_world_size(group)
+    B.distributed.barrier(group=group)
 
     # if the tensor is scalar, things are easy
     if result.ndim == 0:
         return _simple_gather_all_tensors(result, group, world_size)
 
     # 1. Gather sizes of all tensors
-    local_size = torch.tensor(result.shape, device=result.device)
-    local_sizes = [torch.zeros_like(local_size) for _ in range(world_size)]
-    torch.distributed.all_gather(local_sizes, local_size, group=group)
-    max_size = torch.stack(local_sizes).max(dim=0).values
+    local_size = B.tensor(result.shape, device=result.device)
+    local_sizes = [B.zeros_like(local_size) for _ in range(world_size)]
+    B.distributed.all_gather(local_sizes, local_size, group=group)
+    max_size = B.stack(local_sizes).max(dim=0).values
     all_sizes_equal = all(all(ls == max_size) for ls in local_sizes)
 
     # 2. If shapes are all the same, then do a simple gather:
@@ -136,9 +136,9 @@ def gather_all_tensors(result: Tensor, group: Optional[Any] = None) -> List[Tens
     for val in reversed(pad_by):
         pad_dims.append(0)
         pad_dims.append(val.item())
-    result_padded = F.pad(result, pad_dims)
-    gathered_result = [torch.zeros_like(result_padded) for _ in range(world_size)]
-    torch.distributed.all_gather(gathered_result, result_padded, group)
+    result_padded = B.pad(result, pad_dims)
+    gathered_result = [B.zeros_like(result_padded) for _ in range(world_size)]
+    B.distributed.all_gather(gathered_result, result_padded, group)
     for idx, item_size in enumerate(local_sizes):
         slice_param = [slice(dim_size) for dim_size in item_size]
         gathered_result[idx] = gathered_result[idx][slice_param]

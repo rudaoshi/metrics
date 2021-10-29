@@ -14,8 +14,8 @@
 import warnings
 from typing import Any, Callable, List, Optional, Union
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.metric import Metric
 from torchmetrics.utilities.data import dim_zero_cat
@@ -85,9 +85,9 @@ class BaseAggregator(Metric):
         """Converts input x to a tensor if not already and afterwards checks for nans that either give an error,
         warning or just ignored."""
         if not isinstance(x, Tensor):
-            x = torch.as_tensor(x, dtype=torch.float32, device=self.device)
+            x = B.as_tensor(x, dtype=B.float32, device=self.device)
 
-        nans = torch.isnan(x)
+        nans = B.isnan(x)
         if any(nans.flatten()):
             if self.nan_strategy == "error":
                 raise RuntimeError("Encounted `nan` values in tensor")
@@ -141,7 +141,7 @@ class MaxMetric(BaseAggregator):
         >>> from torchmetrics import MaxMetric
         >>> metric = MaxMetric()
         >>> metric.update(1)
-        >>> metric.update(torch.tensor([2, 3]))
+        >>> metric.update(B.tensor([2, 3]))
         >>> metric.compute()
         tensor(3.)
     """
@@ -156,7 +156,7 @@ class MaxMetric(BaseAggregator):
     ):
         super().__init__(
             "max",
-            -torch.tensor(float("inf")),
+            -B.tensor(float("inf")),
             nan_strategy,
             compute_on_step,
             dist_sync_on_step,
@@ -173,7 +173,7 @@ class MaxMetric(BaseAggregator):
         """
         value = self._cast_and_nan_check_input(value)
         if any(value.flatten()):  # make sure tensor not empty
-            self.value = torch.max(self.value, torch.max(value))
+            self.value = B.max(self.value, B.max(value))
 
 
 class MinMetric(BaseAggregator):
@@ -207,7 +207,7 @@ class MinMetric(BaseAggregator):
         >>> from torchmetrics import MinMetric
         >>> metric = MinMetric()
         >>> metric.update(1)
-        >>> metric.update(torch.tensor([2, 3]))
+        >>> metric.update(B.tensor([2, 3]))
         >>> metric.compute()
         tensor(1.)
     """
@@ -222,7 +222,7 @@ class MinMetric(BaseAggregator):
     ):
         super().__init__(
             "min",
-            torch.tensor(float("inf")),
+            B.tensor(float("inf")),
             nan_strategy,
             compute_on_step,
             dist_sync_on_step,
@@ -239,7 +239,7 @@ class MinMetric(BaseAggregator):
         """
         value = self._cast_and_nan_check_input(value)
         if any(value.flatten()):  # make sure tensor not empty
-            self.value = torch.min(self.value, torch.min(value))
+            self.value = B.min(self.value, B.min(value))
 
 
 class SumMetric(BaseAggregator):
@@ -273,7 +273,7 @@ class SumMetric(BaseAggregator):
         >>> from torchmetrics import SumMetric
         >>> metric = SumMetric()
         >>> metric.update(1)
-        >>> metric.update(torch.tensor([2, 3]))
+        >>> metric.update(B.tensor([2, 3]))
         >>> metric.compute()
         tensor(6.)
     """
@@ -287,7 +287,7 @@ class SumMetric(BaseAggregator):
         dist_sync_fn: Callable = None,
     ):
         super().__init__(
-            "sum", torch.zeros(1), nan_strategy, compute_on_step, dist_sync_on_step, process_group, dist_sync_fn
+            "sum", B.zeros(1), nan_strategy, compute_on_step, dist_sync_on_step, process_group, dist_sync_fn
         )
 
     def update(self, value: Union[float, Tensor]) -> None:  # type: ignore
@@ -332,7 +332,7 @@ class CatMetric(BaseAggregator):
         >>> from torchmetrics import CatMetric
         >>> metric = CatMetric()
         >>> metric.update(1)
-        >>> metric.update(torch.tensor([2, 3]))
+        >>> metric.update(B.tensor([2, 3]))
         >>> metric.compute()
         tensor([1., 2., 3.])
     """
@@ -396,7 +396,7 @@ class MeanMetric(BaseAggregator):
         >>> from torchmetrics import MeanMetric
         >>> metric = MeanMetric()
         >>> metric.update(1)
-        >>> metric.update(torch.tensor([2, 3]))
+        >>> metric.update(B.tensor([2, 3]))
         >>> metric.compute()
         tensor([2.])
     """
@@ -410,9 +410,9 @@ class MeanMetric(BaseAggregator):
         dist_sync_fn: Callable = None,
     ):
         super().__init__(
-            "sum", torch.zeros(1), nan_strategy, compute_on_step, dist_sync_on_step, process_group, dist_sync_fn
+            "sum", B.zeros(1), nan_strategy, compute_on_step, dist_sync_on_step, process_group, dist_sync_fn
         )
-        self.add_state("weight", default=torch.zeros(1), dist_reduce_fx="sum")
+        self.add_state("weight", default=B.zeros(1), dist_reduce_fx="sum")
 
     def update(self, value: Union[float, Tensor], weight: Union[float, Tensor] = 1.0) -> None:  # type: ignore
         """Update state with data.
@@ -431,11 +431,11 @@ class MeanMetric(BaseAggregator):
         # broadcast weight to values shape
         if not hasattr(torch, "broadcast_to"):
             if weight.shape == ():
-                weight = torch.ones_like(value) * weight
+                weight = B.ones_like(value) * weight
             if weight.shape != value.shape:
                 raise ValueError("Broadcasting not supported on PyTorch <1.8")
         else:
-            weight = torch.broadcast_to(weight, value.shape)
+            weight = B.broadcast_to(weight, value.shape)
 
         self.value += (value * weight).sum()
         self.weight += weight.sum()

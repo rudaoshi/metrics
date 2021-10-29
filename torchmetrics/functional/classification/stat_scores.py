@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import List, Optional, Tuple, Union
 
-import torch
-from torch import Tensor, tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor, tensor
 
 from torchmetrics.utilities.checks import _input_format_classification
 from torchmetrics.utilities.enums import AverageMethod, MDMCAverageMethod
@@ -22,7 +22,7 @@ from torchmetrics.utilities.enums import AverageMethod, MDMCAverageMethod
 
 def _del_column(data: Tensor, idx: int) -> Tensor:
     """Delete the column at index."""
-    return torch.cat([data[:, :idx], data[:, (idx + 1) :]], 1)
+    return B.cat([data[:, :idx], data[:, (idx + 1) :]], 1)
 
 
 def _stat_scores(
@@ -125,8 +125,8 @@ def _stat_scores_update(
                 "When your inputs are multi-dimensional multi-class, you have to set the `mdmc_reduce` parameter"
             )
         if mdmc_reduce == "global":
-            preds = torch.transpose(preds, 1, 2).reshape(-1, preds.shape[1])
-            target = torch.transpose(target, 1, 2).reshape(-1, target.shape[1])
+            preds = B.transpose(preds, 1, 2).reshape(-1, preds.shape[1])
+            target = B.transpose(target, 1, 2).reshape(-1, target.shape[1])
 
     # Delete what is in ignore_index, if applicable (and classes don't matter):
     if ignore_index is not None and reduce != "macro":
@@ -156,8 +156,8 @@ def _stat_scores_compute(tp: Tensor, fp: Tensor, tn: Tensor, fn: Tensor) -> Tens
         fn: False negatives
 
     Example:
-        >>> preds  = torch.tensor([1, 0, 2, 1])
-        >>> target = torch.tensor([1, 1, 2, 0])
+        >>> preds  = B.tensor([1, 0, 2, 1])
+        >>> target = B.tensor([1, 1, 2, 0])
         >>> tp, fp, tn, fn = _stat_scores_update(preds, target, reduce='macro', num_classes=3)
         >>> _stat_scores_compute(tp, fp, tn, fn)
         tensor([[0, 1, 2, 1, 1],
@@ -174,8 +174,8 @@ def _stat_scores_compute(tp: Tensor, fp: Tensor, tn: Tensor, fn: Tensor) -> Tens
         fn.unsqueeze(-1),
         tp.unsqueeze(-1) + fn.unsqueeze(-1),  # support
     ]
-    outputs: Tensor = torch.cat(stats, -1)
-    outputs = torch.where(outputs < 0, tensor(-1, device=outputs.device), outputs)
+    outputs: Tensor = B.cat(stats, -1)
+    outputs = B.where(outputs < 0, tensor(-1, device=outputs.device), outputs)
 
     return outputs
 
@@ -209,13 +209,13 @@ def _reduce_stat_scores(
     ignore_mask = denominator < 0
 
     if weights is None:
-        weights = torch.ones_like(denominator)
+        weights = B.ones_like(denominator)
     else:
         weights = weights.float()
 
-    numerator = torch.where(zero_div_mask, tensor(float(zero_division), device=numerator.device), numerator)
-    denominator = torch.where(zero_div_mask | ignore_mask, tensor(1.0, device=denominator.device), denominator)
-    weights = torch.where(ignore_mask, tensor(0.0, device=weights.device), weights)
+    numerator = B.where(zero_div_mask, tensor(float(zero_division), device=numerator.device), numerator)
+    denominator = B.where(zero_div_mask | ignore_mask, tensor(1.0, device=denominator.device), denominator)
+    weights = B.where(ignore_mask, tensor(0.0, device=weights.device), weights)
 
     if average not in (AverageMethod.MICRO, AverageMethod.NONE, None):
         weights = weights / weights.sum(dim=-1, keepdim=True)
@@ -223,14 +223,14 @@ def _reduce_stat_scores(
     scores = weights * (numerator / denominator)
 
     # This is in case where sum(weights) = 0, which happens if we ignore the only present class with average='weighted'
-    scores = torch.where(torch.isnan(scores), tensor(float(zero_division), device=scores.device), scores)
+    scores = B.where(B.isnan(scores), tensor(float(zero_division), device=scores.device), scores)
 
     if mdmc_average == MDMCAverageMethod.SAMPLEWISE:
         scores = scores.mean(dim=0)
         ignore_mask = ignore_mask.sum(dim=0).bool()
 
     if average in (AverageMethod.NONE, None):
-        scores = torch.where(ignore_mask, tensor(float("nan"), device=scores.device), scores)
+        scores = B.where(ignore_mask, tensor(float("nan"), device=scores.device), scores)
     else:
         scores = scores.sum()
 
@@ -361,8 +361,8 @@ def stat_scores(
 
     Example:
         >>> from torchmetrics.functional import stat_scores
-        >>> preds  = torch.tensor([1, 0, 2, 1])
-        >>> target = torch.tensor([1, 1, 2, 0])
+        >>> preds  = B.tensor([1, 0, 2, 1])
+        >>> target = B.tensor([1, 1, 2, 0])
         >>> stat_scores(preds, target, reduce='macro', num_classes=3)
         tensor([[0, 1, 2, 1, 1],
                 [1, 1, 1, 1, 2],

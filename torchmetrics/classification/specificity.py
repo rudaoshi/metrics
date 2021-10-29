@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Any, Callable, Optional
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.classification.stat_scores import StatScores
 from torchmetrics.functional.classification.specificity import _specificity_compute
@@ -111,8 +111,8 @@ class Specificity(StatScores):
 
     Example:
         >>> from torchmetrics import Specificity
-        >>> preds  = torch.tensor([2, 0, 2, 1])
-        >>> target = torch.tensor([1, 1, 2, 0])
+        >>> preds  = B.tensor([2, 0, 2, 1])
+        >>> target = B.tensor([1, 1, 2, 0])
         >>> specificity = Specificity(average='macro', num_classes=3)
         >>> specificity(preds, target)
         tensor(0.6111)

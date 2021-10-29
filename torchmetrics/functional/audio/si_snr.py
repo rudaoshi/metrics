@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from torch import Tensor
+from pangu.core.backend import  Tensor
 
 from torchmetrics.functional.audio.si_sdr import si_sdr
 
@@ -29,10 +29,10 @@ def si_snr(preds: Tensor, target: Tensor) -> Tensor:
         si-snr value of shape [...]
 
     Example:
-        >>> import torch
+        >>> import pangu.core.backend as B
         >>> from torchmetrics.functional.audio import si_snr
-        >>> target = torch.tensor([3.0, -0.5, 2.0, 7.0])
-        >>> preds = torch.tensor([2.5, 0.0, 2.0, 8.0])
+        >>> target = B.tensor([3.0, -0.5, 2.0, 7.0])
+        >>> preds = B.tensor([2.5, 0.0, 2.0, 8.0])
         >>> si_snr_val = si_snr(preds, target)
         >>> si_snr_val
         tensor(15.0918)

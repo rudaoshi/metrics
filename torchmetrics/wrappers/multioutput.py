@@ -1,22 +1,22 @@
 from copy import deepcopy
 from typing import Any, Callable, List, Optional, Tuple
 
-import torch
-from torch import nn
+import pangu.core.backend as B
+from pangu.core.backend import  nn
 
 from torchmetrics import Metric
 from torchmetrics.utilities import apply_to_collection
 
 
-def _get_nan_indices(*tensors: torch.Tensor) -> torch.Tensor:
+def _get_nan_indices(*tensors: B.Tensor) -> B.Tensor:
     """Get indices of rows along dim 0 which have NaN values."""
     if len(tensors) == 0:
         raise ValueError("Must pass at least one tensor as argument")
     sentinel = tensors[0]
-    nan_idxs = torch.zeros(len(sentinel), dtype=torch.bool, device=sentinel.device)
+    nan_idxs = B.zeros(len(sentinel), dtype=B.bool, device=sentinel.device)
     for tensor in tensors:
         permuted_tensor = tensor.flatten(start_dim=1)
-        nan_idxs |= torch.any(torch.isnan(permuted_tensor), dim=1)
+        nan_idxs |= B.any(B.isnan(permuted_tensor), dim=1)
     return nan_idxs
 
 
@@ -68,17 +68,17 @@ class MultioutputWrapper(Metric):
     Example:
 
          >>> # Mimic R2Score in `multioutput`, `raw_values` mode:
-         >>> import torch
+         >>> import pangu.core.backend as B
          >>> from torchmetrics import MultioutputWrapper, R2Score
-         >>> target = torch.tensor([[0.5, 1], [-1, 1], [7, -6]])
-         >>> preds = torch.tensor([[0, 2], [-1, 2], [8, -5]])
+         >>> target = B.tensor([[0.5, 1], [-1, 1], [7, -6]])
+         >>> preds = B.tensor([[0, 2], [-1, 2], [8, -5]])
          >>> r2score = MultioutputWrapper(R2Score(), 2)
          >>> r2score(preds, target)
          [tensor(0.9654), tensor(0.9082)]
          >>> # Classification metric where prediction and label tensors have different shapes.
          >>> from torchmetrics import BinnedAveragePrecision
-         >>> target = torch.tensor([[1, 2], [2, 0], [1, 2]])
-         >>> preds = torch.tensor([
+         >>> target = B.tensor([[1, 2], [2, 0], [1, 2]])
+         >>> preds = B.tensor([
          ...     [[.1, .8], [.8, .05], [.1, .15]],
          ...     [[.1, .1], [.2, .3], [.7, .6]],
          ...     [[.002, .4], [.95, .45], [.048, .15]]
@@ -114,16 +114,16 @@ class MultioutputWrapper(Metric):
         self.squeeze_outputs = squeeze_outputs
 
     def _get_args_kwargs_by_output(
-        self, *args: torch.Tensor, **kwargs: torch.Tensor
-    ) -> List[Tuple[torch.Tensor, torch.Tensor]]:
+        self, *args: B.Tensor, **kwargs: B.Tensor
+    ) -> List[Tuple[B.Tensor, B.Tensor]]:
         """Get args and kwargs reshaped to be output-specific and (maybe) having NaNs stripped out."""
         args_kwargs_by_output = []
         for i in range(len(self.metrics)):
             selected_args = apply_to_collection(
-                args, torch.Tensor, torch.index_select, dim=self.output_dim, index=torch.tensor(i, device=self.device)
+                args, B.Tensor, B.index_select, dim=self.output_dim, index=B.tensor(i, device=self.device)
             )
             selected_kwargs = apply_to_collection(
-                kwargs, torch.Tensor, torch.index_select, dim=self.output_dim, index=torch.tensor(i, device=self.device)
+                kwargs, B.Tensor, B.index_select, dim=self.output_dim, index=B.tensor(i, device=self.device)
             )
             if self.remove_nans:
                 args_kwargs = selected_args + tuple(selected_kwargs.values())
@@ -142,11 +142,10 @@ class MultioutputWrapper(Metric):
         for metric, (selected_args, selected_kwargs) in zip(self.metrics, reshaped_args_kwargs):
             metric.update(*selected_args, **selected_kwargs)
 
-    def compute(self) -> List[torch.Tensor]:
+    def compute(self) -> List[B.Tensor]:
         """Compute metrics."""
         return [m.compute() for m in self.metrics]
 
-    @torch.jit.unused
     def forward(self, *args: Any, **kwargs: Any) -> Any:
         """Call underlying forward methods and aggregate the results if they're non-null.
 

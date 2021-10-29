@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Any, Callable, Optional
 
-import torch
-from torch import Tensor, tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor, tensor
 
 from torchmetrics.functional.classification.hamming_distance import _hamming_distance_compute, _hamming_distance_update
 from torchmetrics.metric import Metric
@@ -60,8 +60,8 @@ class HammingDistance(Metric):
 
     Example:
         >>> from torchmetrics import HammingDistance
-        >>> target = torch.tensor([[0, 1], [1, 1]])
-        >>> preds = torch.tensor([[0, 1], [0, 1]])
+        >>> target = B.tensor([[0, 1], [1, 1]])
+        >>> preds = B.tensor([[0, 1], [0, 1]])
         >>> hamming_distance = HammingDistance()
         >>> hamming_distance(preds, target)
         tensor(0.2500)

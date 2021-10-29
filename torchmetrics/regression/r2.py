@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Any, Callable, Optional
 
-import torch
-from torch import Tensor, tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor, tensor
 
 from torchmetrics.functional.regression.r2 import _r2_score_compute, _r2_score_update
 from torchmetrics.metric import Metric
@@ -74,14 +74,14 @@ class R2Score(Metric):
 
     Example:
         >>> from torchmetrics import R2Score
-        >>> target = torch.tensor([3, -0.5, 2, 7])
-        >>> preds = torch.tensor([2.5, 0.0, 2, 8])
+        >>> target = B.tensor([3, -0.5, 2, 7])
+        >>> preds = B.tensor([2.5, 0.0, 2, 8])
         >>> r2score = R2Score()
         >>> r2score(preds, target)
         tensor(0.9486)
 
-        >>> target = torch.tensor([[0.5, 1], [-1, 1], [7, -6]])
-        >>> preds = torch.tensor([[0, 2], [-1, 2], [8, -5]])
+        >>> target = B.tensor([[0.5, 1], [-1, 1], [7, -6]])
+        >>> preds = B.tensor([[0, 2], [-1, 2], [8, -5]])
         >>> r2score = R2Score(num_outputs=2, multioutput='raw_values')
         >>> r2score(preds, target)
         tensor([0.9654, 0.9082])
@@ -123,9 +123,9 @@ class R2Score(Metric):
             )
         self.multioutput = multioutput
 
-        self.add_state("sum_squared_error", default=torch.zeros(self.num_outputs), dist_reduce_fx="sum")
-        self.add_state("sum_error", default=torch.zeros(self.num_outputs), dist_reduce_fx="sum")
-        self.add_state("residual", default=torch.zeros(self.num_outputs), dist_reduce_fx="sum")
+        self.add_state("sum_squared_error", default=B.zeros(self.num_outputs), dist_reduce_fx="sum")
+        self.add_state("sum_error", default=B.zeros(self.num_outputs), dist_reduce_fx="sum")
+        self.add_state("residual", default=B.zeros(self.num_outputs), dist_reduce_fx="sum")
         self.add_state("total", default=tensor(0), dist_reduce_fx="sum")
 
     def update(self, preds: Tensor, target: Tensor) -> None:  # type: ignore

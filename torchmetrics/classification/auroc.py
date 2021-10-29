@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Any, Callable, List, Optional
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.functional.classification.auroc import _auroc_compute, _auroc_update
 from torchmetrics.metric import Metric
@@ -74,26 +74,26 @@ class AUROC(Metric):
         ValueError:
             If ``max_fpr`` is not a ``float`` in the range ``(0, 1]``.
         RuntimeError:
-            If ``PyTorch version`` is ``below 1.6`` since max_fpr requires ``torch.bucketize``
+            If ``PyTorch version`` is ``below 1.6`` since max_fpr requires ``B.bucketize``
             which is not available below 1.6.
         ValueError:
             If the mode of data (binary, multi-label, multi-class) changes between batches.
 
     Example (binary case):
         >>> from torchmetrics import AUROC
-        >>> preds = torch.tensor([0.13, 0.26, 0.08, 0.19, 0.34])
-        >>> target = torch.tensor([0, 0, 1, 1, 1])
+        >>> preds = B.tensor([0.13, 0.26, 0.08, 0.19, 0.34])
+        >>> target = B.tensor([0, 0, 1, 1, 1])
         >>> auroc = AUROC(pos_label=1)
         >>> auroc(preds, target)
         tensor(0.5000)
 
     Example (multiclass case):
-        >>> preds = torch.tensor([[0.90, 0.05, 0.05],
+        >>> preds = B.tensor([[0.90, 0.05, 0.05],
         ...                       [0.05, 0.90, 0.05],
         ...                       [0.05, 0.05, 0.90],
         ...                       [0.85, 0.05, 0.10],
         ...                       [0.10, 0.10, 0.80]])
-        >>> target = torch.tensor([0, 1, 1, 2, 2])
+        >>> target = B.tensor([0, 1, 1, 2, 2])
         >>> auroc = AUROC(num_classes=3)
         >>> auroc(preds, target)
         tensor(0.7778)
@@ -138,7 +138,7 @@ class AUROC(Metric):
 
             if _TORCH_LOWER_1_6:
                 raise RuntimeError(
-                    "`max_fpr` argument requires `torch.bucketize` which is not available below PyTorch version 1.6"
+                    "`max_fpr` argument requires `B.bucketize` which is not available below PyTorch version 1.6"
                 )
 
         self.mode: DataType = None  # type: ignore

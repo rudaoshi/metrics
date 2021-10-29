@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Any, Callable, List, Optional
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.functional.regression.spearman import _spearman_corrcoef_compute, _spearman_corrcoef_update
 from torchmetrics.metric import Metric
@@ -46,8 +46,8 @@ class SpearmanCorrcoef(Metric):
 
     Example:
         >>> from torchmetrics import SpearmanCorrcoef
-        >>> target = torch.tensor([3, -0.5, 2, 7])
-        >>> preds = torch.tensor([2.5, 0.0, 2, 8])
+        >>> target = B.tensor([3, -0.5, 2, 7])
+        >>> preds = B.tensor([2.5, 0.0, 2, 8])
         >>> spearman = SpearmanCorrcoef()
         >>> spearman(preds, target)
         tensor(1.0000)

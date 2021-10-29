@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Optional
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.functional.classification.confusion_matrix import _confusion_matrix_update
 from torchmetrics.utilities.data import get_num_classes
@@ -48,7 +48,7 @@ def _iou_from_confmat(
     if ignore_index is not None and 0 <= ignore_index < num_classes:
         confmat[ignore_index] = 0.0
 
-    intersection = torch.diag(confmat)
+    intersection = B.diag(confmat)
     union = confmat.sum(0) + confmat.sum(1) - intersection
 
     # If this class is absent in both target AND pred (union == 0), then use the absent_score for this class.
@@ -56,7 +56,7 @@ def _iou_from_confmat(
     scores[union == 0] = absent_score
 
     if ignore_index is not None and 0 <= ignore_index < num_classes:
-        scores = torch.cat(
+        scores = B.cat(
             [
                 scores[:ignore_index],
                 scores[ignore_index + 1 :],
@@ -121,8 +121,8 @@ def iou(
 
     Example:
         >>> from torchmetrics.functional import iou
-        >>> target = torch.randint(0, 2, (10, 25, 25))
-        >>> pred = torch.tensor(target)
+        >>> target = B.randint(0, 2, (10, 25, 25))
+        >>> pred = B.tensor(target)
         >>> pred[2:5, 7:13, 9:15] = 1 - pred[2:5, 7:13, 9:15]
         >>> iou(pred, target)
         tensor(0.9660)

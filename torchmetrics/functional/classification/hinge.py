@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Optional, Tuple, Union
 
-import torch
-from torch import Tensor, tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor, tensor
 
 from torchmetrics.utilities.checks import _input_squeeze
 from torchmetrics.utilities.data import to_onehot
@@ -98,10 +98,10 @@ def _hinge_update(
 
     if mode == DataType.MULTICLASS and (multiclass_mode is None or multiclass_mode == MulticlassMode.CRAMMER_SINGER):
         margin = preds[target]
-        margin -= torch.max(preds[~target].view(preds.shape[0], -1), dim=1)[0]
+        margin -= B.max(preds[~target].view(preds.shape[0], -1), dim=1)[0]
     elif mode == DataType.BINARY or multiclass_mode == MulticlassMode.ONE_VS_ALL:
         target = target.bool()
-        margin = torch.zeros_like(preds)
+        margin = B.zeros_like(preds)
         margin[target] = preds[target]
         margin[~target] = -preds[~target]
     else:
@@ -112,7 +112,7 @@ def _hinge_update(
         )
 
     measures = 1 - margin
-    measures = torch.clamp(measures, 0)
+    measures = B.clamp(measures, 0)
 
     if squared:
         measures = measures.pow(2)
@@ -130,22 +130,22 @@ def _hinge_compute(measure: Tensor, total: Tensor) -> Tensor:
 
     Example:
         >>> # binary case
-        >>> target = torch.tensor([0, 1, 1])
-        >>> preds = torch.tensor([-2.2, 2.4, 0.1])
+        >>> target = B.tensor([0, 1, 1])
+        >>> preds = B.tensor([-2.2, 2.4, 0.1])
         >>> measure, total = _hinge_update(preds, target)
         >>> _hinge_compute(measure, total)
         tensor(0.3000)
 
         >>> # multiclass case
-        >>> target = torch.tensor([0, 1, 2])
-        >>> preds = torch.tensor([[-1.0, 0.9, 0.2], [0.5, -1.1, 0.8], [2.2, -0.5, 0.3]])
+        >>> target = B.tensor([0, 1, 2])
+        >>> preds = B.tensor([[-1.0, 0.9, 0.2], [0.5, -1.1, 0.8], [2.2, -0.5, 0.3]])
         >>> measure, total = _hinge_update(preds, target)
         >>> _hinge_compute(measure, total)
         tensor(2.9000)
 
         >>> # multiclass one-vs-all mode case
-        >>> target = torch.tensor([0, 1, 2])
-        >>> preds = torch.tensor([[-1.0, 0.9, 0.2], [0.5, -1.1, 0.8], [2.2, -0.5, 0.3]])
+        >>> target = B.tensor([0, 1, 2])
+        >>> preds = B.tensor([[-1.0, 0.9, 0.2], [0.5, -1.1, 0.8], [2.2, -0.5, 0.3]])
         >>> measure, total = _hinge_update(preds, target, multiclass_mode="one-vs-all")
         >>> _hinge_compute(measure, total)
         tensor([2.2333, 1.5000, 1.2333])
@@ -208,22 +208,22 @@ def hinge(
             ``MulticlassMode.ONE_VS_ALL`` or ``"one-vs-all"``.
 
     Example (binary case):
-        >>> import torch
+        >>> import pangu.core.backend as B
         >>> from torchmetrics.functional import hinge
-        >>> target = torch.tensor([0, 1, 1])
-        >>> preds = torch.tensor([-2.2, 2.4, 0.1])
+        >>> target = B.tensor([0, 1, 1])
+        >>> preds = B.tensor([-2.2, 2.4, 0.1])
         >>> hinge(preds, target)
         tensor(0.3000)
 
     Example (default / multiclass case):
-        >>> target = torch.tensor([0, 1, 2])
-        >>> preds = torch.tensor([[-1.0, 0.9, 0.2], [0.5, -1.1, 0.8], [2.2, -0.5, 0.3]])
+        >>> target = B.tensor([0, 1, 2])
+        >>> preds = B.tensor([[-1.0, 0.9, 0.2], [0.5, -1.1, 0.8], [2.2, -0.5, 0.3]])
         >>> hinge(preds, target)
         tensor(2.9000)
 
     Example (multiclass example, one vs all mode):
-        >>> target = torch.tensor([0, 1, 2])
-        >>> preds = torch.tensor([[-1.0, 0.9, 0.2], [0.5, -1.1, 0.8], [2.2, -0.5, 0.3]])
+        >>> target = B.tensor([0, 1, 2])
+        >>> preds = B.tensor([[-1.0, 0.9, 0.2], [0.5, -1.1, 0.8], [2.2, -0.5, 0.3]])
         >>> hinge(preds, target, multiclass_mode="one-vs-all")
         tensor([2.2333, 1.5000, 1.2333])
     """

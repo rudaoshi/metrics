@@ -14,8 +14,8 @@
 import warnings
 from typing import List, Optional, Sequence, Tuple, Union
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.functional.classification.precision_recall_curve import (
     _precision_recall_curve_compute,
@@ -77,19 +77,19 @@ def _average_precision_compute(
 
     Example:
         >>> # binary case
-        >>> preds = torch.tensor([0, 1, 2, 3])
-        >>> target = torch.tensor([0, 1, 1, 1])
+        >>> preds = B.tensor([0, 1, 2, 3])
+        >>> target = B.tensor([0, 1, 1, 1])
         >>> pos_label = 1
         >>> preds, target, num_classes, pos_label = _average_precision_update(preds, target, pos_label=pos_label)
         >>> _average_precision_compute(preds, target, num_classes, pos_label)
         tensor(1.)
 
         >>> # multiclass case
-        >>> preds = torch.tensor([[0.75, 0.05, 0.05, 0.05, 0.05],
+        >>> preds = B.tensor([[0.75, 0.05, 0.05, 0.05, 0.05],
         ...                      [0.05, 0.75, 0.05, 0.05, 0.05],
         ...                      [0.05, 0.05, 0.75, 0.05, 0.05],
         ...                      [0.05, 0.05, 0.05, 0.75, 0.05]])
-        >>> target = torch.tensor([0, 1, 3, 2])
+        >>> target = B.tensor([0, 1, 3, 2])
         >>> num_classes = 5
         >>> preds, target, num_classes, pos_label = _average_precision_update(preds, target, num_classes)
         >>> _average_precision_compute(preds, target, num_classes, average=None)
@@ -102,8 +102,8 @@ def _average_precision_compute(
         if preds.ndim == target.ndim and target.ndim > 1:
             weights = target.sum(dim=0).float()
         else:
-            weights = torch.bincount(target, minlength=num_classes).float()
-        weights = weights / torch.sum(weights)
+            weights = B.bincount(target, minlength=num_classes).float()
+        weights = weights / B.sum(weights)
     else:
         weights = None
     return _average_precision_compute_with_precision_recall(precision, recall, num_classes, average, weights)
@@ -128,8 +128,8 @@ def _average_precision_compute_with_precision_recall(
 
     Example:
         >>> # binary case
-        >>> preds = torch.tensor([0, 1, 2, 3])
-        >>> target = torch.tensor([0, 1, 1, 1])
+        >>> preds = B.tensor([0, 1, 2, 3])
+        >>> target = B.tensor([0, 1, 1, 1])
         >>> pos_label = 1
         >>> preds, target, num_classes, pos_label = _average_precision_update(preds, target, pos_label=pos_label)
         >>> precision, recall, _ = _precision_recall_curve_compute(preds, target, num_classes, pos_label)
@@ -137,11 +137,11 @@ def _average_precision_compute_with_precision_recall(
         tensor(1.)
 
         >>> # multiclass case
-        >>> preds = torch.tensor([[0.75, 0.05, 0.05, 0.05, 0.05],
+        >>> preds = B.tensor([[0.75, 0.05, 0.05, 0.05, 0.05],
         ...                      [0.05, 0.75, 0.05, 0.05, 0.05],
         ...                      [0.05, 0.05, 0.75, 0.05, 0.05],
         ...                      [0.05, 0.05, 0.05, 0.75, 0.05]])
-        >>> target = torch.tensor([0, 1, 3, 2])
+        >>> target = B.tensor([0, 1, 3, 2])
         >>> num_classes = 5
         >>> preds, target, num_classes, pos_label = _average_precision_update(preds, target, num_classes)
         >>> precision, recall, _ = _precision_recall_curve_compute(preds, target, num_classes)
@@ -153,24 +153,24 @@ def _average_precision_compute_with_precision_recall(
     # The following works because the last entry of precision is
     # guaranteed to be 1, as returned by precision_recall_curve
     if num_classes == 1:
-        return -torch.sum((recall[1:] - recall[:-1]) * precision[:-1])
+        return -B.sum((recall[1:] - recall[:-1]) * precision[:-1])
 
     res = []
     for p, r in zip(precision, recall):
-        res.append(-torch.sum((r[1:] - r[:-1]) * p[:-1]))
+        res.append(-B.sum((r[1:] - r[:-1]) * p[:-1]))
 
     # Reduce
     if average in ("macro", "weighted"):
-        res = torch.stack(res)
-        if torch.isnan(res).any():
+        res = B.stack(res)
+        if B.isnan(res).any():
             warnings.warn(
                 "Average precision score for one or more classes was `nan`. Ignoring these classes in average",
                 UserWarning,
             )
         if average == "macro":
-            return res[~torch.isnan(res)].mean()
-        weights = torch.ones_like(res) if weights is None else weights
-        return (res * weights)[~torch.isnan(res)].sum()
+            return res[~B.isnan(res)].mean()
+        weights = B.ones_like(res) if weights is None else weights
+        return (res * weights)[~B.isnan(res)].sum()
     if average is None:
         return res
     allowed_average = ("micro", "macro", "weighted", None)
@@ -217,17 +217,17 @@ def average_precision(
 
     Example (binary case):
         >>> from torchmetrics.functional import average_precision
-        >>> pred = torch.tensor([0, 1, 2, 3])
-        >>> target = torch.tensor([0, 1, 1, 1])
+        >>> pred = B.tensor([0, 1, 2, 3])
+        >>> target = B.tensor([0, 1, 1, 1])
         >>> average_precision(pred, target, pos_label=1)
         tensor(1.)
 
     Example (multiclass case):
-        >>> pred = torch.tensor([[0.75, 0.05, 0.05, 0.05, 0.05],
+        >>> pred = B.tensor([[0.75, 0.05, 0.05, 0.05, 0.05],
         ...                      [0.05, 0.75, 0.05, 0.05, 0.05],
         ...                      [0.05, 0.05, 0.75, 0.05, 0.05],
         ...                      [0.05, 0.05, 0.05, 0.75, 0.05]])
-        >>> target = torch.tensor([0, 1, 3, 2])
+        >>> target = B.tensor([0, 1, 3, 2])
         >>> average_precision(pred, target, num_classes=5, average=None)
         [tensor(1.), tensor(1.), tensor(0.2500), tensor(0.2500), tensor(nan)]
     """

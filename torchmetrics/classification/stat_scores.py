@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Any, Callable, Optional, Tuple
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import Tensor
 
 from torchmetrics.functional.classification.stat_scores import _stat_scores_compute, _stat_scores_update
 from torchmetrics.metric import Metric
@@ -115,8 +115,8 @@ class StatScores(Metric):
 
     Example:
         >>> from torchmetrics.classification import StatScores
-        >>> preds  = torch.tensor([1, 0, 2, 1])
-        >>> target = torch.tensor([1, 1, 2, 0])
+        >>> preds  = B.tensor([1, 0, 2, 1])
+        >>> target = B.tensor([1, 1, 2, 0])
         >>> stat_scores = StatScores(reduce='macro', num_classes=3)
         >>> stat_scores(preds, target)
         tensor([[0, 1, 2, 1, 1],
@@ -184,7 +184,7 @@ class StatScores(Metric):
                 zeros_shape = [num_classes]
             else:
                 raise ValueError(f'Wrong reduce="{reduce}"')
-            default = lambda: torch.zeros(zeros_shape, dtype=torch.long)
+            default = lambda: B.zeros(zeros_shape, dtype=B.long)
             reduce_fn = "sum"
 
         for s in ("tp", "fp", "tn", "fn"):
@@ -226,10 +226,10 @@ class StatScores(Metric):
 
     def _get_final_stats(self) -> Tuple[Tensor, Tensor, Tensor, Tensor]:
         """Performs concatenation on the stat scores if neccesary, before passing them to a compute function."""
-        tp = torch.cat(self.tp) if isinstance(self.tp, list) else self.tp
-        fp = torch.cat(self.fp) if isinstance(self.fp, list) else self.fp
-        tn = torch.cat(self.tn) if isinstance(self.tn, list) else self.tn
-        fn = torch.cat(self.fn) if isinstance(self.fn, list) else self.fn
+        tp = B.cat(self.tp) if isinstance(self.tp, list) else self.tp
+        fp = B.cat(self.fp) if isinstance(self.fp, list) else self.fp
+        tn = B.cat(self.tn) if isinstance(self.tn, list) else self.tn
+        fn = B.cat(self.fn) if isinstance(self.fn, list) else self.fn
         return tp, fp, tn, fn
 
     def compute(self) -> Tensor:

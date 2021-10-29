@@ -14,8 +14,8 @@
 from copy import deepcopy
 from typing import Any, Callable, Dict, Optional, Union
 
-import torch
-from torch import Tensor, nn
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor, nn
 
 from torchmetrics.metric import Metric
 from torchmetrics.utilities import apply_to_collection
@@ -30,18 +30,18 @@ def _bootstrap_sampler(
     Args:
         size: number of samples
         sampling_strategy: the strategy to use for sampling, either ``'poisson'`` or ``'multinomial'``
-        generator: a instance of ``torch.Generator`` that controls the sampling
+        generator: a instance of ``B.Generator`` that controls the sampling
 
     Returns:
         resampled tensor
 
     """
     if sampling_strategy == "poisson":
-        p = torch.distributions.Poisson(1)
+        p = B.distributions.Poisson(1)
         n = p.sample((size,))
-        return torch.arange(size).repeat_interleave(n.long(), dim=0)
+        return B.arange(size).repeat_interleave(n.long(), dim=0)
     if sampling_strategy == "multinomial":
-        idx = torch.multinomial(torch.ones(size), num_samples=size, replacement=True)
+        idx = B.multinomial(B.ones(size), num_samples=size, replacement=True)
         return idx
     raise ValueError("Unknown sampling strategy")
 
@@ -102,10 +102,10 @@ class BootStrapper(Metric):
         Example::
             >>> from pprint import pprint
             >>> from torchmetrics import Accuracy, BootStrapper
-            >>> _ = torch.manual_seed(123)
+            >>> _ = B.manual_seed(123)
             >>> base_metric = Accuracy()
             >>> bootstrap = BootStrapper(base_metric, num_bootstraps=20)
-            >>> bootstrap.update(torch.randint(5, (20,)), torch.randint(5, (20,)))
+            >>> bootstrap.update(B.randint(5, (20,)), B.randint(5, (20,)))
             >>> output = bootstrap.compute()
             >>> pprint(output)
             {'mean': tensor(0.2205), 'std': tensor(0.0859)}
@@ -150,8 +150,8 @@ class BootStrapper(Metric):
             else:
                 raise ValueError("None of the input contained tensors, so could not determine the sampling size")
             sample_idx = _bootstrap_sampler(size, sampling_strategy=self.sampling_strategy).to(self.device)
-            new_args = apply_to_collection(args, Tensor, torch.index_select, dim=0, index=sample_idx)
-            new_kwargs = apply_to_collection(kwargs, Tensor, torch.index_select, dim=0, index=sample_idx)
+            new_args = apply_to_collection(args, Tensor, B.index_select, dim=0, index=sample_idx)
+            new_kwargs = apply_to_collection(kwargs, Tensor, B.index_select, dim=0, index=sample_idx)
             self.metrics[idx].update(*new_args, **new_kwargs)
 
     def compute(self) -> Dict[str, Tensor]:
@@ -160,14 +160,14 @@ class BootStrapper(Metric):
         Allways returns a dict of tensors, which can contain the following keys: ``mean``, ``std``, ``quantile`` and
         ``raw`` depending on how the class was initialized
         """
-        computed_vals = torch.stack([m.compute() for m in self.metrics], dim=0)
+        computed_vals = B.stack([m.compute() for m in self.metrics], dim=0)
         output_dict = {}
         if self.mean:
             output_dict["mean"] = computed_vals.mean(dim=0)
         if self.std:
             output_dict["std"] = computed_vals.std(dim=0)
         if self.quantile is not None:
-            output_dict["quantile"] = torch.quantile(computed_vals, self.quantile)
+            output_dict["quantile"] = B.quantile(computed_vals, self.quantile)
         if self.raw:
             output_dict["raw"] = computed_vals
         return output_dict

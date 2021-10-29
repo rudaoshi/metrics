@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Tuple
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.utilities.checks import _check_same_shape
 
@@ -35,10 +35,10 @@ def _symmetric_mean_absolute_percentage_error_update(
 
     _check_same_shape(preds, target)
 
-    abs_diff = torch.abs(preds - target)
-    abs_per_error = abs_diff / torch.clamp(torch.abs(target) + torch.abs(preds), min=epsilon)
+    abs_diff = B.abs(preds - target)
+    abs_per_error = abs_diff / B.clamp(B.abs(target) + B.abs(preds), min=epsilon)
 
-    sum_abs_per_error = 2 * torch.sum(abs_per_error)
+    sum_abs_per_error = 2 * B.sum(abs_per_error)
 
     num_obs = target.numel()
 
@@ -54,8 +54,8 @@ def _symmetric_mean_absolute_percentage_error_compute(sum_abs_per_error: Tensor,
         num_obs: Number of predictions or observations
 
     Example:
-        >>> target = torch.tensor([1, 10, 1e6])
-        >>> preds = torch.tensor([0.9, 15, 1.2e6])
+        >>> target = B.tensor([1, 10, 1e6])
+        >>> preds = B.tensor([0.9, 15, 1.2e6])
         >>> sum_abs_per_error, num_obs = _symmetric_mean_absolute_percentage_error_update(preds, target)
         >>> _symmetric_mean_absolute_percentage_error_compute(sum_abs_per_error, num_obs)
         tensor(0.2290)
@@ -81,8 +81,8 @@ def symmetric_mean_absolute_percentage_error(preds: Tensor, target: Tensor) -> T
 
     Example:
         >>> from torchmetrics.functional import symmetric_mean_absolute_percentage_error
-        >>> target = torch.tensor([1, 10, 1e6])
-        >>> preds = torch.tensor([0.9, 15, 1.2e6])
+        >>> target = B.tensor([1, 10, 1e6])
+        >>> preds = B.tensor([0.9, 15, 1.2e6])
         >>> symmetric_mean_absolute_percentage_error(preds, target)
         tensor(0.2290)
 

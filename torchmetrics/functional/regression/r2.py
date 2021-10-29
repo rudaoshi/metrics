@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Tuple
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.utilities import rank_zero_warn
 from torchmetrics.utilities.checks import _check_same_shape
@@ -35,10 +35,10 @@ def _r2_score_update(preds: Tensor, target: Tensor) -> Tuple[Tensor, Tensor, Ten
             f" but received tensors with dimension {preds.shape}"
         )
 
-    sum_obs = torch.sum(target, dim=0)
-    sum_squared_obs = torch.sum(target * target, dim=0)
+    sum_obs = B.sum(target, dim=0)
+    sum_squared_obs = B.sum(target * target, dim=0)
     residual = target - preds
-    rss = torch.sum(residual * residual, dim=0)
+    rss = B.sum(residual * residual, dim=0)
     n_obs = target.size(0)
 
     return sum_squared_obs, sum_obs, rss, n_obs
@@ -69,8 +69,8 @@ def _r2_score_compute(
             * `'variance_weighted'` scores are weighted by their individual variances
 
     Example:
-        >>> target = torch.tensor([[0.5, 1], [-1, 1], [7, -6]])
-        >>> preds = torch.tensor([[0, 2], [-1, 2], [8, -5]])
+        >>> target = B.tensor([[0.5, 1], [-1, 1], [7, -6]])
+        >>> preds = B.tensor([[0, 2], [-1, 2], [8, -5]])
         >>> sum_squared_obs, sum_obs, rss, n_obs = _r2_score_update(preds, target)
         >>> _r2_score_compute(sum_squared_obs, sum_obs, rss, n_obs, multioutput="raw_values")
         tensor([0.9654, 0.9082])
@@ -85,10 +85,10 @@ def _r2_score_compute(
     if multioutput == "raw_values":
         r2 = raw_scores
     elif multioutput == "uniform_average":
-        r2 = torch.mean(raw_scores)
+        r2 = B.mean(raw_scores)
     elif multioutput == "variance_weighted":
-        tss_sum = torch.sum(tss)
-        r2 = torch.sum(tss / tss_sum * raw_scores)
+        tss_sum = B.sum(tss)
+        r2 = B.sum(tss / tss_sum * raw_scores)
     else:
         raise ValueError(
             "Argument `multioutput` must be either `raw_values`,"
@@ -158,13 +158,13 @@ def r2_score(
 
     Example:
         >>> from torchmetrics.functional import r2_score
-        >>> target = torch.tensor([3, -0.5, 2, 7])
-        >>> preds = torch.tensor([2.5, 0.0, 2, 8])
+        >>> target = B.tensor([3, -0.5, 2, 7])
+        >>> preds = B.tensor([2.5, 0.0, 2, 8])
         >>> r2_score(preds, target)
         tensor(0.9486)
 
-        >>> target = torch.tensor([[0.5, 1], [-1, 1], [7, -6]])
-        >>> preds = torch.tensor([[0, 2], [-1, 2], [8, -5]])
+        >>> target = B.tensor([[0.5, 1], [-1, 1], [7, -6]])
+        >>> preds = B.tensor([[0, 2], [-1, 2], [8, -5]])
         >>> r2_score(preds, target, multioutput='raw_values')
         tensor([0.9654, 0.9082])
 

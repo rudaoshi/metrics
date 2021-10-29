@@ -14,8 +14,8 @@
 from abc import ABC, abstractmethod
 from typing import Any, Callable, List, Optional
 
-import torch
-from torch import Tensor, tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor, tensor
 
 from torchmetrics import Metric
 from torchmetrics.utilities.checks import _check_retrieval_inputs
@@ -24,7 +24,7 @@ from torchmetrics.utilities.data import get_group_indexes
 #: get_group_indexes is used to group predictions belonging to the same document
 
 
-class RetrievalMetric(Metric, ABC):
+class RetrievalMetric(Metric):
     """Works with binary target data. Accepts float predictions from a model output.
 
     Forward accepts
@@ -115,9 +115,9 @@ class RetrievalMetric(Metric, ABC):
         for each group compute the ``_metric`` if the number of positive targets is at least 1, otherwise behave as
         specified by ``self.empty_target_action``.
         """
-        indexes = torch.cat(self.indexes, dim=0)
-        preds = torch.cat(self.preds, dim=0)
-        target = torch.cat(self.target, dim=0)
+        indexes = B.cat(self.indexes, dim=0)
+        preds = B.cat(self.preds, dim=0)
+        target = B.cat(self.target, dim=0)
 
         res = []
         groups = get_group_indexes(indexes)
@@ -137,7 +137,7 @@ class RetrievalMetric(Metric, ABC):
                 # ensure list contains only float tensors
                 res.append(self._metric(mini_preds, mini_target))
 
-        return torch.stack([x.to(preds) for x in res]).mean() if res else tensor(0.0).to(preds)
+        return B.stack([x.to(preds) for x in res]).mean() if res else tensor(0.0).to(preds)
 
     @abstractmethod
     def _metric(self, preds: Tensor, target: Tensor) -> Tensor:

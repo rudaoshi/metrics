@@ -13,7 +13,7 @@
 # limitations under the License.
 from typing import Any, Callable, List, Optional
 
-from torch import Tensor
+from pangu.core.backend import  Tensor
 
 from torchmetrics.functional.classification.auc import _auc_compute, _auc_update
 from torchmetrics.metric import Metric

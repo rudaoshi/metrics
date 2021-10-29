@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Optional, Tuple
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.functional.classification.stat_scores import _reduce_stat_scores, _stat_scores_update
 from torchmetrics.utilities.enums import AverageMethod, MDMCAverageMethod
@@ -39,8 +39,8 @@ def _precision_compute(
 
     Example:
         >>> from torchmetrics.functional.classification.stat_scores import _stat_scores_update
-        >>> preds  = torch.tensor([2, 0, 2, 1])
-        >>> target = torch.tensor([1, 1, 2, 0])
+        >>> preds  = B.tensor([2, 0, 2, 1])
+        >>> target = B.tensor([1, 1, 2, 0])
         >>> tp, fp, tn, fn = _stat_scores_update( preds, target, reduce='macro', num_classes=3)
         >>> _precision_compute(tp, fp, fn, average='macro', mdmc_average=None)
         tensor(0.1667)
@@ -59,7 +59,7 @@ def _precision_compute(
 
     if average == AverageMethod.NONE and mdmc_average != MDMCAverageMethod.SAMPLEWISE:
         # a class is not present if there exists no TPs, no FPs, and no FNs
-        meaningless_indeces = torch.nonzero((tp | fn | fp) == 0).cpu()
+        meaningless_indeces = B.nonzero((tp | fn | fp) == 0).cpu()
         numerator[meaningless_indeces, ...] = -1
         denominator[meaningless_indeces, ...] = -1
 
@@ -180,8 +180,8 @@ def precision(
 
     Example:
         >>> from torchmetrics.functional import precision
-        >>> preds  = torch.tensor([2, 0, 2, 1])
-        >>> target = torch.tensor([1, 1, 2, 0])
+        >>> preds  = B.tensor([2, 0, 2, 1])
+        >>> target = B.tensor([1, 1, 2, 0])
         >>> precision(preds, target, average='macro', num_classes=3)
         tensor(0.1667)
         >>> precision(preds, target, average='micro')
@@ -237,8 +237,8 @@ def _recall_compute(
 
     Example:
         >>> from torchmetrics.functional.classification.stat_scores import _stat_scores_update
-        >>> preds  = torch.tensor([2, 0, 2, 1])
-        >>> target = torch.tensor([1, 1, 2, 0])
+        >>> preds  = B.tensor([2, 0, 2, 1])
+        >>> target = B.tensor([1, 1, 2, 0])
         >>> tp, fp, tn, fn = _stat_scores_update(preds, target, reduce='macro', num_classes=3)
         >>> _recall_compute(tp, fp, fn, average='macro', mdmc_average=None)
         tensor(0.3333)
@@ -377,8 +377,8 @@ def recall(
 
     Example:
         >>> from torchmetrics.functional import recall
-        >>> preds  = torch.tensor([2, 0, 2, 1])
-        >>> target = torch.tensor([1, 1, 2, 0])
+        >>> preds  = B.tensor([2, 0, 2, 1])
+        >>> target = B.tensor([1, 1, 2, 0])
         >>> recall(preds, target, average='macro', num_classes=3)
         tensor(0.3333)
         >>> recall(preds, target, average='micro')
@@ -527,8 +527,8 @@ def precision_recall(
 
     Example:
         >>> from torchmetrics.functional import precision_recall
-        >>> preds  = torch.tensor([2, 0, 2, 1])
-        >>> target = torch.tensor([1, 1, 2, 0])
+        >>> preds  = B.tensor([2, 0, 2, 1])
+        >>> target = B.tensor([1, 1, 2, 0])
         >>> precision_recall(preds, target, average='macro', num_classes=3)
         (tensor(0.1667), tensor(0.3333))
         >>> precision_recall(preds, target, average='micro')

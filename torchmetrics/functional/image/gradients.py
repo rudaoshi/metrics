@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Tuple
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 
 def _image_gradients_validate(img: Tensor) -> None:
@@ -35,11 +35,11 @@ def _compute_image_gradients(img: Tensor) -> Tuple[Tensor, Tensor]:
     dx = img[..., :, 1:] - img[..., :, :-1]
 
     shapey = [batch_size, channels, 1, width]
-    dy = torch.cat([dy, torch.zeros(shapey, device=img.device, dtype=img.dtype)], dim=2)
+    dy = B.cat([dy, B.zeros(shapey, device=img.device, dtype=img.dtype)], dim=2)
     dy = dy.view(img.shape)
 
     shapex = [batch_size, channels, height, 1]
-    dx = torch.cat([dx, torch.zeros(shapex, device=img.device, dtype=img.dtype)], dim=3)
+    dx = B.cat([dx, B.zeros(shapex, device=img.device, dtype=img.dtype)], dim=3)
     dx = dx.view(img.shape)
 
     return dy, dx
@@ -56,14 +56,14 @@ def image_gradients(img: Tensor) -> Tuple[Tensor, Tensor]:
 
     Raises:
         TypeError:
-            If ``img`` is not of the type <torch.Tensor>.
+            If ``img`` is not of the type <B.Tensor>.
         RuntimeError:
             If ``img`` is not a 4D tensor.
 
     Example:
         >>> from torchmetrics.functional import image_gradients
-        >>> image = torch.arange(0, 1*1*5*5, dtype=torch.float32)
-        >>> image = torch.reshape(image, (1, 1, 5, 5))
+        >>> image = B.arange(0, 1*1*5*5, dtype=B.float32)
+        >>> image = B.reshape(image, (1, 1, 5, 5))
         >>> dy, dx = image_gradients(image)
         >>> dy[0, 0, :, :]
         tensor([[5., 5., 5., 5., 5.],

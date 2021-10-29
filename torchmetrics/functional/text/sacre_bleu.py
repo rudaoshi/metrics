@@ -15,7 +15,7 @@
 # Library Name: torchtext
 # Authors: torchtext authors and @sluks
 # Date: 2020-07-18
-# Link: https://pytorch.org/text/_modules/torchtext/data/metrics.html#bleu_score
+# Link: https://pyB.org/text/_modules/torchtext/data/metrics.html#bleu_score
 
 ##############
 
@@ -41,8 +41,8 @@
 import re
 from typing import Sequence
 
-import torch
-from torch import Tensor, tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor, tensor
 from typing_extensions import Literal
 
 from torchmetrics.functional.text.bleu import _bleu_score_compute, _bleu_score_update
@@ -343,10 +343,10 @@ def sacre_bleu_score(
         _SacreBLEUTokenizer.tokenize(line, tokenize, lowercase) for line in translate_corpus
     ]
 
-    numerator = torch.zeros(n_gram)
-    denominator = torch.zeros(n_gram)
-    trans_len = tensor(0, dtype=torch.float)
-    ref_len = tensor(0, dtype=torch.float)
+    numerator = B.zeros(n_gram)
+    denominator = B.zeros(n_gram)
+    trans_len = tensor(0, dtype=B.float)
+    ref_len = tensor(0, dtype=B.float)
 
     trans_len, ref_len = _bleu_score_update(
         reference_corpus_, translate_corpus_, numerator, denominator, trans_len, ref_len, n_gram

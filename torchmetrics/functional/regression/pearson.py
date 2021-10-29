@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Tuple
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.utilities.checks import _check_same_shape
 
@@ -78,7 +78,7 @@ def _pearson_corrcoef_compute(
     var_y /= nb - 1
     corr_xy /= nb - 1
     corrcoef = (corr_xy / (var_x * var_y).sqrt()).squeeze()
-    return torch.clamp(corrcoef, -1.0, 1.0)
+    return B.clamp(corrcoef, -1.0, 1.0)
 
 
 def pearson_corrcoef(preds: Tensor, target: Tensor) -> Tensor:
@@ -90,12 +90,12 @@ def pearson_corrcoef(preds: Tensor, target: Tensor) -> Tensor:
 
     Example:
         >>> from torchmetrics.functional import pearson_corrcoef
-        >>> target = torch.tensor([3, -0.5, 2, 7])
-        >>> preds = torch.tensor([2.5, 0.0, 2, 8])
+        >>> target = B.tensor([3, -0.5, 2, 7])
+        >>> preds = B.tensor([2.5, 0.0, 2, 8])
         >>> pearson_corrcoef(preds, target)
         tensor(0.9849)
     """
-    _temp = torch.zeros(1, dtype=preds.dtype, device=preds.device)
+    _temp = B.zeros(1, dtype=preds.dtype, device=preds.device)
     mean_x, mean_y, var_x = _temp.clone(), _temp.clone(), _temp.clone()
     var_y, corr_xy, nb = _temp.clone(), _temp.clone(), _temp.clone()
     _, _, var_x, var_y, corr_xy, nb = _pearson_corrcoef_update(preds, target, mean_x, mean_y, var_x, var_y, corr_xy, nb)

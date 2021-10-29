@@ -15,8 +15,8 @@
 from typing import List, Optional, Tuple, Union
 from warnings import warn
 
-import torch
-from torch import Tensor, tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor, tensor
 
 
 def _edit_distance(prediction_tokens: List[str], reference_tokens: List[str]) -> int:
@@ -61,8 +61,8 @@ def _wer_update(
         predictions = [predictions]
     if isinstance(references, str):
         references = [references]
-    errors = tensor(0, dtype=torch.float)
-    total = tensor(0, dtype=torch.float)
+    errors = tensor(0, dtype=B.float)
+    total = tensor(0, dtype=B.float)
     for prediction, reference in zip(predictions, references):
         prediction_tokens = prediction.split()
         reference_tokens = reference.split()

@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Optional
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.functional.classification.stat_scores import _reduce_stat_scores, _stat_scores_update
 from torchmetrics.utilities.enums import AverageMethod, MDMCAverageMethod
@@ -41,8 +41,8 @@ def _specificity_compute(
 
     Example:
         >>> from torchmetrics.functional.classification.stat_scores import _stat_scores_update
-        >>> preds  = torch.tensor([2, 0, 2, 1])
-        >>> target = torch.tensor([1, 1, 2, 0])
+        >>> preds  = B.tensor([2, 0, 2, 1])
+        >>> target = B.tensor([1, 1, 2, 0])
         >>> tp, fp, tn, fn = _stat_scores_update(preds, target, reduce='macro', num_classes=3)
         >>> _specificity_compute(tp, fp, tn, fn, average='macro', mdmc_average=None)
         tensor(0.6111)
@@ -55,7 +55,7 @@ def _specificity_compute(
     denominator = tn + fp
     if average == AverageMethod.NONE and mdmc_average != MDMCAverageMethod.SAMPLEWISE:
         # a class is not present if there exists no TPs, no FPs, and no FNs
-        meaningless_indeces = torch.nonzero((tp | fn | fp) == 0).cpu()
+        meaningless_indeces = B.nonzero((tp | fn | fp) == 0).cpu()
         numerator[meaningless_indeces, ...] = -1
         denominator[meaningless_indeces, ...] = -1
     return _reduce_stat_scores(
@@ -176,8 +176,8 @@ def specificity(
 
     Example:
         >>> from torchmetrics.functional import specificity
-        >>> preds  = torch.tensor([2, 0, 2, 1])
-        >>> target = torch.tensor([1, 1, 2, 0])
+        >>> preds  = B.tensor([2, 0, 2, 1])
+        >>> target = B.tensor([1, 1, 2, 0])
         >>> specificity(preds, target, average='macro', num_classes=3)
         tensor(0.6111)
         >>> specificity(preds, target, average='micro')

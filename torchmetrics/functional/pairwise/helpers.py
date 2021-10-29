@@ -13,7 +13,7 @@
 # limitations under the License.
 from typing import Optional, Tuple
 
-from torch import Tensor
+from pangu.core.backend import  Tensor
 
 
 def _check_input(

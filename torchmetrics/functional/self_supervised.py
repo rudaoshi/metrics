@@ -13,8 +13,8 @@
 # limitations under the License.
 from warnings import warn
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.functional.pairwise import pairwise_cosine_similarity, pairwise_linear_similarity
 
@@ -26,7 +26,7 @@ def embedding_similarity(
 
     Example:
         >>> from torchmetrics.functional import embedding_similarity
-        >>> embeddings = torch.tensor([[1., 2., 3., 4.], [1., 2., 3., 4.], [4., 5., 6., 7.]])
+        >>> embeddings = B.tensor([[1., 2., 3., 4.], [1., 2., 3., 4.], [4., 5., 6., 7.]])
         >>> embedding_similarity(embeddings)
         tensor([[0.0000, 1.0000, 0.9759],
                 [1.0000, 0.0000, 0.9759],

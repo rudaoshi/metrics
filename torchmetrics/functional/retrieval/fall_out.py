@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Optional
 
-import torch
-from torch import Tensor, tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor, tensor
 
 from torchmetrics.utilities.checks import _check_retrieval_functional_inputs
 
@@ -58,5 +58,5 @@ def retrieval_fall_out(preds: Tensor, target: Tensor, k: Optional[int] = None) -
     if not target.sum():
         return tensor(0.0, device=preds.device)
 
-    relevant = target[torch.argsort(preds, dim=-1, descending=True)][:k].sum().float()
+    relevant = target[B.argsort(preds, dim=-1, descending=True)][:k].sum().float()
     return relevant / target.sum()

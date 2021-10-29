@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Any, Callable, List, Optional
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.functional.regression.cosine_similarity import _cosine_similarity_compute, _cosine_similarity_update
 from torchmetrics.metric import Metric
@@ -54,8 +54,8 @@ class CosineSimilarity(Metric):
 
     Example:
         >>> from torchmetrics import CosineSimilarity
-        >>> target = torch.tensor([[0, 1], [1, 1]])
-        >>> preds = torch.tensor([[0, 1], [0, 1]])
+        >>> target = B.tensor([[0, 1], [1, 1]])
+        >>> preds = B.tensor([[0, 1], [0, 1]])
         >>> cosine_similarity = CosineSimilarity(reduction = 'mean')
         >>> cosine_similarity(preds, target)
         tensor(0.8536)

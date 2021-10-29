@@ -13,7 +13,7 @@
 # limitations under the License.
 from typing import Any, Callable, Optional
 
-from torch import Tensor, tensor
+from pangu.core.backend import Tensor, tensor
 
 from torchmetrics.functional.classification.accuracy import (
     _accuracy_compute,
@@ -149,16 +149,16 @@ class Accuracy(StatScores):
             If ``top_k`` parameter is set for ``multi-label`` inputs.
 
     Example:
-        >>> import torch
+        >>> import pangu.core.backend as B
         >>> from torchmetrics import Accuracy
-        >>> target = torch.tensor([0, 1, 2, 3])
-        >>> preds = torch.tensor([0, 2, 1, 3])
+        >>> target = B.tensor([0, 1, 2, 3])
+        >>> preds = B.tensor([0, 2, 1, 3])
         >>> accuracy = Accuracy()
         >>> accuracy(preds, target)
         tensor(0.5000)
 
-        >>> target = torch.tensor([0, 1, 2])
-        >>> preds = torch.tensor([[0.1, 0.9, 0], [0.3, 0.1, 0.6], [0.2, 0.5, 0.3]])
+        >>> target = B.tensor([0, 1, 2])
+        >>> preds = B.tensor([[0.1, 0.9, 0], [0.3, 0.1, 0.6], [0.2, 0.5, 0.3]])
         >>> accuracy = Accuracy(top_k=2)
         >>> accuracy(preds, target)
         tensor(0.6667)

@@ -20,9 +20,8 @@ from contextlib import contextmanager
 from copy import deepcopy
 from typing import Any, Callable, Dict, Generator, List, Optional, Union
 
-import torch
-from torch import Tensor
-from torch.nn import Module
+import pangu.core.backend as B
+from pangu.core.backend import Tensor, Module
 
 from torchmetrics.utilities import apply_to_collection, rank_zero_warn
 from torchmetrics.utilities.data import _flatten, dim_zero_cat, dim_zero_max, dim_zero_mean, dim_zero_min, dim_zero_sum
@@ -32,10 +31,10 @@ from torchmetrics.utilities.imports import _LIGHTNING_AVAILABLE, _compare_versio
 
 
 def jit_distributed_available() -> bool:
-    return torch.distributed.is_available() and torch.distributed.is_initialized()
+    return B.distributed.is_available() and B.distributed.is_initialized()
 
 
-class Metric(Module, ABC):
+class Metric(Module):
     """Base class for all metrics present in the Metrics API.
 
     Implements ``add_state()``, ``forward()``, ``reset()`` and a few other things to
@@ -46,8 +45,8 @@ class Metric(Module, ABC):
     call of ``update()`` and are synchronized across processes when ``compute()`` is called.
 
     Note:
-        Metric state variables can either be ``torch.Tensors`` or an empty list which can we used
-        to store `torch.Tensors``.
+        Metric state variables can either be ``B.Tensors`` or an empty list which can we used
+        to store `B.Tensors``.
 
     Note:
         Different metrics only override ``update()`` and not ``forward()``. A call to ``update()``
@@ -82,11 +81,11 @@ class Metric(Module, ABC):
         super().__init__()
 
         # see (https://github.com/pytorch/pytorch/blob/3e6bb5233f9ca2c5aa55d9cda22a7ee85439aa6e/
-        # torch/nn/modules/module.py#L227)
-        torch._C._log_api_usage_once(f"torchmetrics.metric.{self.__class__.__name__}")
+        # B.nn/modules/module.py#L227)
+#        B._C._log_api_usage_once(f"torchmetrics.metric.{self.__class__.__name__}")
 
-        self._LIGHTNING_GREATER_EQUAL_1_3 = _compare_version("pytorch_lightning", op.ge, "1.3.0")
-        self._device = torch.device("cpu")
+#        self._LIGHTNING_GREATER_EQUAL_1_3 = _compare_version("pytorch_lightning", op.ge, "1.3.0")
+        # self._device = B.device("cpu")
 
         self.dist_sync_on_step = dist_sync_on_step
         self.compute_on_step = compute_on_step
@@ -122,11 +121,11 @@ class Metric(Module, ABC):
 
         Args:
             name: The name of the state variable. The variable will then be accessible at ``self.name``.
-            default: Default value of the state; can either be a ``torch.Tensor`` or an empty list. The state will be
+            default: Default value of the state; can either be a ``B.Tensor`` or an empty list. The state will be
                 reset to this value when ``self.reset()`` is called.
             dist_reduce_fx (Optional): Function to reduce state across multiple processes in distributed mode.
-                If value is ``"sum"``, ``"mean"``, ``"cat"``, ``"min"`` or ``"max"`` we will use ``torch.sum``,
-                ``torch.mean``, ``torch.cat``, ``torch.min`` and ``torch.max``` respectively, each with argument
+                If value is ``"sum"``, ``"mean"``, ``"cat"``, ``"min"`` or ``"max"`` we will use ``B.sum``,
+                ``B.mean``, ``B.cat``, ``B.min`` and ``B.max``` respectively, each with argument
                 ``dim=0``. Note that the ``"cat"`` reduction only makes sense if the state is a list, and not
                 a tensor. The user can also pass a custom function in this parameter.
             persistent (Optional): whether the state will be saved as part of the modules ``state_dict``.
@@ -138,8 +137,8 @@ class Metric(Module, ABC):
 
             The metric states would be synced as follows
 
-            - If the metric state is ``torch.Tensor``, the synced value will be a stacked ``torch.Tensor`` across
-              the process dimension if the metric state was a ``torch.Tensor``. The original ``torch.Tensor`` metric
+            - If the metric state is ``B.Tensor``, the synced value will be a stacked ``B.Tensor`` across
+              the process dimension if the metric state was a ``B.Tensor``. The original ``B.Tensor`` metric
               state retains dimension and hence the synchronized output will be of shape ``(num_process, ...)``.
 
             - If the metric state is a ``list``, the synced value will be a ``list`` containing the
@@ -156,7 +155,7 @@ class Metric(Module, ABC):
                 If ``dist_reduce_fx`` is not callable or one of ``"mean"``, ``"sum"``, ``"cat"``, ``None``.
         """
         if not isinstance(default, (Tensor, list)) or (isinstance(default, list) and default):
-            raise ValueError("state variable must be a tensor or any empty list (where you can append tensors)")
+            raise ValueError(f"state variable must be a tensor or any empty list (where you can append tensors): {type(default)}")
 
         if dist_reduce_fx == "sum":
             dist_reduce_fx = dim_zero_sum
@@ -180,7 +179,7 @@ class Metric(Module, ABC):
         self._persistent[name] = persistent
         self._reductions[name] = dist_reduce_fx
 
-    @torch.jit.unused
+#    @B.jit.unused
     def forward(self, *args: Any, **kwargs: Any) -> Any:
         """Automatically calls ``update()``.
 
@@ -193,7 +192,7 @@ class Metric(Module, ABC):
                 "HINT: Did you forget to call ``unsync`` ?."
             )
 
-        with torch.no_grad():
+        with B.no_grad():
             self.update(*args, **kwargs)
 
         if self.compute_on_step:
@@ -238,7 +237,7 @@ class Metric(Module, ABC):
         for attr, reduction_fn in self._reductions.items():
             # pre-processing ops (stack or flatten for inputs)
             if isinstance(output_dict[attr][0], Tensor):
-                output_dict[attr] = torch.stack(output_dict[attr])
+                output_dict[attr] = B.stack(output_dict[attr])
             elif isinstance(output_dict[attr][0], list):
                 output_dict[attr] = _flatten(output_dict[attr])
 
@@ -424,11 +423,11 @@ class Metric(Module, ABC):
         super().__setattr__(name, value)
 
     @property
-    def device(self) -> "torch.device":
+    def device(self) -> "B.device":
         """Return the device of the metric."""
         return self._device
 
-    def type(self, dst_type: Union[str, torch.dtype]) -> "Metric":
+    def type(self, dst_type: Union[str, B.dtype]) -> "Metric":
         """Method override default and prevent dtype casting.
 
         Please use `metric.set_dtype(dtype)` instead.
@@ -456,7 +455,7 @@ class Metric(Module, ABC):
         """
         return self
 
-    def set_dtype(self, dst_type: Union[str, torch.dtype]) -> None:
+    def set_dtype(self, dst_type: Union[str, B.dtype]) -> None:
         """Special version of `type` for transferring all metric states to specific dtype
         Arguments:
             dst_type (type or string): the desired type
@@ -486,7 +485,7 @@ class Metric(Module, ABC):
 
         # make sure to update the device attribute
         # if the dummy tensor moves device by fn function we should also update the attribute
-        self._device = fn(torch.zeros(1, device=self.device)).device
+        self._device = fn(B.zeros(1, device=self.device)).device
 
         # Additional apply to forward cache and computed attributes (may be nested)
         if this._computed is not None:
@@ -560,7 +559,7 @@ class Metric(Module, ABC):
     def __hash__(self) -> int:
         # we need to add the id here, since PyTorch requires a module hash to be unique.
         # Internally, PyTorch nn.Module relies on that for children discovery
-        # (see https://github.com/pytorch/pytorch/blob/v1.9.0/torch/nn/modules/module.py#L1544)
+        # (see https://github.com/pytorch/pytorch/blob/v1.9.0/B.nn/modules/module.py#L1544)
         # For metrics that include tensors it is not a problem,
         # since their hash is unique based on the memory location but we cannot rely on that for every metric.
         hash_vals = [self.__class__.__name__, id(self)]
@@ -577,97 +576,97 @@ class Metric(Module, ABC):
         return hash(tuple(hash_vals))
 
     def __add__(self, other: "Metric") -> "Metric":
-        return CompositionalMetric(torch.add, self, other)
+        return CompositionalMetric(B.add, self, other)
 
     def __and__(self, other: "Metric") -> "Metric":
-        return CompositionalMetric(torch.bitwise_and, self, other)
+        return CompositionalMetric(B.bitwise_and, self, other)
 
     # Fixme: this shall return bool instead of Metric
     def __eq__(self, other: "Metric") -> "Metric":  # type: ignore
-        return CompositionalMetric(torch.eq, self, other)
+        return CompositionalMetric(B.eq, self, other)
 
     def __floordiv__(self, other: "Metric") -> "Metric":
-        return CompositionalMetric(torch.floor_divide, self, other)
+        return CompositionalMetric(B.floor_divide, self, other)
 
     def __ge__(self, other: "Metric") -> "Metric":
-        return CompositionalMetric(torch.ge, self, other)
+        return CompositionalMetric(B.ge, self, other)
 
     def __gt__(self, other: "Metric") -> "Metric":
-        return CompositionalMetric(torch.gt, self, other)
+        return CompositionalMetric(B.gt, self, other)
 
     def __le__(self, other: "Metric") -> "Metric":
-        return CompositionalMetric(torch.le, self, other)
+        return CompositionalMetric(B.le, self, other)
 
     def __lt__(self, other: "Metric") -> "Metric":
-        return CompositionalMetric(torch.lt, self, other)
+        return CompositionalMetric(B.lt, self, other)
 
     def __matmul__(self, other: "Metric") -> "Metric":
-        return CompositionalMetric(torch.matmul, self, other)
+        return CompositionalMetric(B.matmul, self, other)
 
     def __mod__(self, other: "Metric") -> "Metric":
-        return CompositionalMetric(torch.fmod, self, other)
+        return CompositionalMetric(B.fmod, self, other)
 
     def __mul__(self, other: "Metric") -> "Metric":
-        return CompositionalMetric(torch.mul, self, other)
+        return CompositionalMetric(B.mul, self, other)
 
     # Fixme: this shall return bool instead of Metric
     def __ne__(self, other: "Metric") -> "Metric":  # type: ignore
-        return CompositionalMetric(torch.ne, self, other)
+        return CompositionalMetric(B.ne, self, other)
 
     def __or__(self, other: "Metric") -> "Metric":
-        return CompositionalMetric(torch.bitwise_or, self, other)
+        return CompositionalMetric(B.bitwise_or, self, other)
 
     def __pow__(self, other: "Metric") -> "Metric":
-        return CompositionalMetric(torch.pow, self, other)
+        return CompositionalMetric(B.pow, self, other)
 
     def __radd__(self, other: "Metric") -> "Metric":
-        return CompositionalMetric(torch.add, other, self)
+        return CompositionalMetric(B.add, other, self)
 
     def __rand__(self, other: "Metric") -> "Metric":
         # swap them since bitwise_and only supports that way and it's commutative
-        return CompositionalMetric(torch.bitwise_and, self, other)
+        return CompositionalMetric(B.bitwise_and, self, other)
 
     def __rfloordiv__(self, other: "Metric") -> "Metric":
-        return CompositionalMetric(torch.floor_divide, other, self)
+        return CompositionalMetric(B.floor_divide, other, self)
 
     def __rmatmul__(self, other: "Metric") -> "Metric":
-        return CompositionalMetric(torch.matmul, other, self)
+        return CompositionalMetric(B.matmul, other, self)
 
     def __rmod__(self, other: "Metric") -> "Metric":
-        return CompositionalMetric(torch.fmod, other, self)
+        return CompositionalMetric(B.fmod, other, self)
 
     def __rmul__(self, other: "Metric") -> "Metric":
-        return CompositionalMetric(torch.mul, other, self)
+        return CompositionalMetric(B.mul, other, self)
 
     def __ror__(self, other: "Metric") -> "Metric":
-        return CompositionalMetric(torch.bitwise_or, other, self)
+        return CompositionalMetric(B.bitwise_or, other, self)
 
     def __rpow__(self, other: "Metric") -> "Metric":
-        return CompositionalMetric(torch.pow, other, self)
+        return CompositionalMetric(B.pow, other, self)
 
     def __rsub__(self, other: "Metric") -> "Metric":
-        return CompositionalMetric(torch.sub, other, self)
+        return CompositionalMetric(B.sub, other, self)
 
     def __rtruediv__(self, other: "Metric") -> "Metric":
-        return CompositionalMetric(torch.true_divide, other, self)
+        return CompositionalMetric(B.true_divide, other, self)
 
     def __rxor__(self, other: "Metric") -> "Metric":
-        return CompositionalMetric(torch.bitwise_xor, other, self)
+        return CompositionalMetric(B.bitwise_xor, other, self)
 
     def __sub__(self, other: "Metric") -> "Metric":
-        return CompositionalMetric(torch.sub, self, other)
+        return CompositionalMetric(B.sub, self, other)
 
     def __truediv__(self, other: "Metric") -> "Metric":
-        return CompositionalMetric(torch.true_divide, self, other)
+        return CompositionalMetric(B.true_divide, self, other)
 
     def __xor__(self, other: "Metric") -> "Metric":
-        return CompositionalMetric(torch.bitwise_xor, self, other)
+        return CompositionalMetric(B.bitwise_xor, self, other)
 
     def __abs__(self) -> "Metric":
-        return CompositionalMetric(torch.abs, self, None)
+        return CompositionalMetric(B.abs, self, None)
 
     def __inv__(self) -> "Metric":
-        return CompositionalMetric(torch.bitwise_not, self, None)
+        return CompositionalMetric(B.bitwise_not, self, None)
 
     def __invert__(self) -> "Metric":
         return self.__inv__()
@@ -676,14 +675,14 @@ class Metric(Module, ABC):
         return CompositionalMetric(_neg, self, None)
 
     def __pos__(self) -> "Metric":
-        return CompositionalMetric(torch.abs, self, None)
+        return CompositionalMetric(B.abs, self, None)
 
     def __getitem__(self, idx: int) -> "Metric":
         return CompositionalMetric(lambda x: x[idx], self, None)
 
 
 def _neg(x: Tensor) -> Tensor:
-    return -torch.abs(x)
+    return -B.abs(x)
 
 
 class CompositionalMetric(Metric):

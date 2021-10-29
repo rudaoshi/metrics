@@ -13,7 +13,7 @@
 # limitations under the License.
 from typing import Any, Callable, Optional, Union
 
-from torch import Tensor, tensor
+from pangu.core.backend import  Tensor, tensor
 
 from torchmetrics.functional.classification.hinge import MulticlassMode, _hinge_compute, _hinge_update
 from torchmetrics.metric import Metric
@@ -61,24 +61,24 @@ class Hinge(Metric):
             ``MulticlassMode.ONE_VS_ALL`` or ``"one-vs-all"``.
 
     Example (binary case):
-        >>> import torch
+        >>> import pangu.core.backend as B
         >>> from torchmetrics import Hinge
-        >>> target = torch.tensor([0, 1, 1])
-        >>> preds = torch.tensor([-2.2, 2.4, 0.1])
+        >>> target = B.tensor([0, 1, 1])
+        >>> preds = B.tensor([-2.2, 2.4, 0.1])
         >>> hinge = Hinge()
         >>> hinge(preds, target)
         tensor(0.3000)
 
     Example (default / multiclass case):
-        >>> target = torch.tensor([0, 1, 2])
-        >>> preds = torch.tensor([[-1.0, 0.9, 0.2], [0.5, -1.1, 0.8], [2.2, -0.5, 0.3]])
+        >>> target = B.tensor([0, 1, 2])
+        >>> preds = B.tensor([[-1.0, 0.9, 0.2], [0.5, -1.1, 0.8], [2.2, -0.5, 0.3]])
         >>> hinge = Hinge()
         >>> hinge(preds, target)
         tensor(2.9000)
 
     Example (multiclass example, one vs all mode):
-        >>> target = torch.tensor([0, 1, 2])
-        >>> preds = torch.tensor([[-1.0, 0.9, 0.2], [0.5, -1.1, 0.8], [2.2, -0.5, 0.3]])
+        >>> target = B.tensor([0, 1, 2])
+        >>> preds = B.tensor([[-1.0, 0.9, 0.2], [0.5, -1.1, 0.8], [2.2, -0.5, 0.3]])
         >>> hinge = Hinge(multiclass_mode="one-vs-all")
         >>> hinge(preds, target)
         tensor([2.2333, 1.5000, 1.2333])

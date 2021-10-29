@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Any, Callable, Optional
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.classification.stat_scores import StatScores
 from torchmetrics.functional.classification.f_beta import _fbeta_compute
@@ -124,8 +124,8 @@ class FBeta(StatScores):
 
     Example:
         >>> from torchmetrics import FBeta
-        >>> target = torch.tensor([0, 1, 2, 0, 1, 2])
-        >>> preds = torch.tensor([0, 2, 1, 0, 0, 1])
+        >>> target = B.tensor([0, 1, 2, 0, 1, 2])
+        >>> preds = B.tensor([0, 2, 1, 0, 0, 1])
         >>> f_beta = FBeta(num_classes=3, beta=0.5)
         >>> f_beta(preds, target)
         tensor(0.3333)
@@ -262,8 +262,8 @@ class F1(FBeta):
 
     Example:
         >>> from torchmetrics import F1
-        >>> target = torch.tensor([0, 1, 2, 0, 1, 2])
-        >>> preds = torch.tensor([0, 2, 1, 0, 0, 1])
+        >>> target = B.tensor([0, 1, 2, 0, 1, 2])
+        >>> preds = B.tensor([0, 2, 1, 0, 0, 1])
         >>> f1 = F1(num_classes=3)
         >>> f1(preds, target)
         tensor(0.3333)

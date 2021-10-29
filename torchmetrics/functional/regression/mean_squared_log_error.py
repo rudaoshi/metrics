@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Tuple
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.utilities.checks import _check_same_shape
 
@@ -28,7 +28,7 @@ def _mean_squared_log_error_update(preds: Tensor, target: Tensor) -> Tuple[Tenso
     """
 
     _check_same_shape(preds, target)
-    sum_squared_log_error = torch.sum(torch.pow(torch.log1p(preds) - torch.log1p(target), 2))
+    sum_squared_log_error = B.sum(B.pow(B.log1p(preds) - B.log1p(target), 2))
     n_obs = target.numel()
     return sum_squared_log_error, n_obs
 
@@ -42,8 +42,8 @@ def _mean_squared_log_error_compute(sum_squared_log_error: Tensor, n_obs: int) -
         n_obs: Number of predictions or observations
 
     Example:
-        >>> preds = torch.tensor([0., 1, 2, 3])
-        >>> target = torch.tensor([0., 1, 2, 2])
+        >>> preds = B.tensor([0., 1, 2, 3])
+        >>> target = B.tensor([0., 1, 2, 2])
         >>> sum_squared_log_error, n_obs = _mean_squared_log_error_update(preds, target)
         >>> _mean_squared_log_error_compute(sum_squared_log_error, n_obs)
         tensor(0.0207)
@@ -64,8 +64,8 @@ def mean_squared_log_error(preds: Tensor, target: Tensor) -> Tensor:
 
     Example:
         >>> from torchmetrics.functional import mean_squared_log_error
-        >>> x = torch.tensor([0., 1, 2, 3])
-        >>> y = torch.tensor([0., 1, 2, 2])
+        >>> x = B.tensor([0., 1, 2, 3])
+        >>> y = B.tensor([0., 1, 2, 2])
         >>> mean_squared_log_error(x, y)
         tensor(0.0207)
 

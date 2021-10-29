@@ -15,8 +15,8 @@ import re
 from collections import Counter
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-import torch
-from torch import Tensor, tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor, tensor
 
 from torchmetrics.utilities.imports import _NLTK_AVAILABLE
 
@@ -233,7 +233,7 @@ def _rouge_score_compute(sentence_results: Dict[str, List[Tensor]]) -> Dict[str,
         return results
 
     for rouge_key, scores in sentence_results.items():
-        results[rouge_key] = torch.tensor(scores).mean()
+        results[rouge_key] = B.tensor(scores).mean()
 
     return results
 

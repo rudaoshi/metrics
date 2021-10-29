@@ -11,8 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.functional.classification.confusion_matrix import _confusion_matrix_update
 
@@ -26,8 +26,8 @@ def _matthews_corrcoef_compute(confmat: Tensor) -> Tensor:
         confmat: Confusion matrix
 
     Example:
-        >>> target = torch.tensor([1, 1, 0, 0])
-        >>> preds = torch.tensor([0, 1, 0, 0])
+        >>> target = B.tensor([1, 1, 0, 0])
+        >>> preds = B.tensor([0, 1, 0, 0])
         >>> confmat = _matthews_corrcoef_update(preds, target, num_classes=2)
         >>> _matthews_corrcoef_compute(confmat)
         tensor(0.5774)
@@ -35,9 +35,9 @@ def _matthews_corrcoef_compute(confmat: Tensor) -> Tensor:
 
     tk = confmat.sum(dim=1).float()
     pk = confmat.sum(dim=0).float()
-    c = torch.trace(confmat).float()
+    c = B.trace(confmat).float()
     s = confmat.sum().float()
-    return (c * s - sum(tk * pk)) / (torch.sqrt(s ** 2 - sum(pk * pk)) * torch.sqrt(s ** 2 - sum(tk * tk)))
+    return (c * s - sum(tk * pk)) / (B.sqrt(s ** 2 - sum(pk * pk)) * B.sqrt(s ** 2 - sum(tk * tk)))
 
 
 def matthews_corrcoef(
@@ -68,8 +68,8 @@ def matthews_corrcoef(
 
     Example:
         >>> from torchmetrics.functional import matthews_corrcoef
-        >>> target = torch.tensor([1, 1, 0, 0])
-        >>> preds = torch.tensor([0, 1, 0, 0])
+        >>> target = B.tensor([1, 1, 0, 0])
+        >>> preds = B.tensor([0, 1, 0, 0])
         >>> matthews_corrcoef(preds, target, num_classes=2)
         tensor(0.5774)
 

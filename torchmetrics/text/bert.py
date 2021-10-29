@@ -14,7 +14,7 @@
 import warnings
 from typing import Any, Callable, Dict, List, Optional, Union
 
-import torch
+import pangu.core.backend as B
 
 from torchmetrics.functional import bert_score
 from torchmetrics.functional.text.bert import _preprocess_text
@@ -29,11 +29,11 @@ if _TRANSFORMERS_AVAILABLE:
 _DEFAULT_MODEL = "roberta-large"
 
 
-def _concatenate(d: Dict[str, List[torch.Tensor]]) -> Dict[str, torch.Tensor]:
+def _concatenate(d: Dict[str, List[B.Tensor]]) -> Dict[str, B.Tensor]:
     """Concatenate list of tensors within a given dictionary."""
-    output_dict: Dict[str, torch.Tensor] = {}
+    output_dict: Dict[str, B.Tensor] = {}
     for k, v in d.items():
-        output_dict[k] = torch.cat(v)
+        output_dict[k] = B.cat(v)
     return output_dict
 
 
@@ -58,18 +58,18 @@ class BERTScore(Metric):
             An indication of whether the representation from all model's layers should be used.
             If `all_layers = True`, the argument `num_layers` is ignored.
         model:
-            A user's own model. Must be of `torch.nn.Module` instance.
+            A user's own model. Must be of `B.nn.Module` instance.
         user_tokenizer:
             A user's own tokenizer used with the own model. This must be an instance with the `__call__` method.
             This method must take an iterable of sentences (`List[str]`) and must return a python dictionary
-            containing `"input_ids"` and `"attention_mask"` represented by `torch.Tensor`. It is up to the user's model
-            of whether `"input_ids"` is a `torch.Tensor` of input ids or embedding vectors.
+            containing `"input_ids"` and `"attention_mask"` represented by `B.Tensor`. It is up to the user's model
+            of whether `"input_ids"` is a `B.Tensor` of input ids or embedding vectors.
             This tokenizer must prepend an equivalent of `[CLS]` token and append an equivalent of `[SEP]` token
             as `transformers` tokenizer does.
         user_forward_fn:
             A user's own forward function used in a combination with `user_model`. This function must take `user_model`
-            and a python dictionary of containing `"input_ids"` and `"attention_mask"` represented by `torch.Tensor`
-            as an input and return the model's output represented by the single `torch.Tensor`.
+            and a python dictionary of containing `"input_ids"` and `"attention_mask"` represented by `B.Tensor`
+            as an input and return the model's output represented by the single `B.Tensor`.
         verbose:
             An indication of whether a progress bar to be displayed during the embeddings calculation.
         idf:
@@ -128,12 +128,12 @@ class BERTScore(Metric):
         model_name_or_path: Optional[str] = None,
         num_layers: Optional[int] = None,
         all_layers: bool = False,
-        model: Optional[torch.nn.Module] = None,
+        model: Optional[B.nn.Module] = None,
         user_tokenizer: Optional[Any] = None,
-        user_forward_fn: Callable[[torch.nn.Module, Dict[str, torch.Tensor]], torch.Tensor] = None,
+        user_forward_fn: Callable[[B.nn.Module, Dict[str, B.Tensor]], B.Tensor] = None,
         verbose: bool = False,
         idf: bool = False,
-        device: Optional[Union[str, torch.device]] = None,
+        device: Optional[Union[str, B.device]] = None,
         max_length: int = 512,
         batch_size: int = 64,
         num_threads: int = 4,
@@ -169,8 +169,8 @@ class BERTScore(Metric):
         self.rescale_with_baseline = rescale_with_baseline
         self.baseline_path = baseline_path
         self.baseline_url = baseline_url
-        self.predictions: Dict[str, List[torch.Tensor]] = {"input_ids": [], "attention_mask": []}
-        self.references: Dict[str, List[torch.Tensor]] = {"input_ids": [], "attention_mask": []}
+        self.predictions: Dict[str, List[B.Tensor]] = {"input_ids": [], "attention_mask": []}
+        self.references: Dict[str, List[B.Tensor]] = {"input_ids": [], "attention_mask": []}
 
         if user_tokenizer:
             self.tokenizer = user_tokenizer

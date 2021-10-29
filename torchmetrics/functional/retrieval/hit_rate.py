@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Optional
 
-import torch
-from torch import Tensor, tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor, tensor
 
 from torchmetrics.utilities.checks import _check_retrieval_functional_inputs
 
@@ -53,5 +53,5 @@ def retrieval_hit_rate(preds: Tensor, target: Tensor, k: Optional[int] = None) -
     if not (isinstance(k, int) and k > 0):
         raise ValueError("`k` has to be a positive integer or None")
 
-    relevant = target[torch.argsort(preds, dim=-1, descending=True)][:k].sum()
+    relevant = target[B.argsort(preds, dim=-1, descending=True)][:k].sum()
     return (relevant > 0).float()

@@ -13,7 +13,7 @@
 # limitations under the License.
 from typing import Any, Callable, Optional
 
-from torch import Tensor, tensor
+from pangu.core.backend import  Tensor, tensor
 
 from torchmetrics.functional.audio.stoi import stoi
 from torchmetrics.metric import Metric
@@ -64,10 +64,10 @@ class STOI(Metric):
 
     Example:
         >>> from torchmetrics.audio import STOI
-        >>> import torch
-        >>> g = torch.manual_seed(1)
-        >>> preds = torch.randn(8000)
-        >>> target = torch.randn(8000)
+        >>> import pangu.core.backend as B
+        >>> g = B.manual_seed(1)
+        >>> preds = B.randn(8000)
+        >>> target = B.randn(8000)
         >>> stoi = STOI(8000, False)
         >>> stoi(preds, target)
         tensor(-0.0100)

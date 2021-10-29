@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Optional
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.functional.classification.stat_scores import _reduce_stat_scores, _stat_scores_update
 from torchmetrics.utilities.enums import AverageMethod as AvgMethod
@@ -53,8 +53,8 @@ def _fbeta_compute(
 
     Example:
         >>> from torchmetrics.functional.classification.stat_scores import _stat_scores_update
-        >>> target = torch.tensor([0, 1, 2, 0, 1, 2])
-        >>> preds = torch.tensor([0, 2, 1, 0, 0, 1])
+        >>> target = B.tensor([0, 1, 2, 0, 1, 2])
+        >>> preds = B.tensor([0, 2, 1, 0, 0, 1])
         >>> tp, fp, tn, fn = _stat_scores_update(
         ...                         preds,
         ...                         target,
@@ -80,11 +80,11 @@ def _fbeta_compute(
     # computing the score for this class is meaningless, thus they should be ignored
     if average == AvgMethod.NONE and mdmc_average != MDMCAverageMethod.SAMPLEWISE:
         # a class is not present if there exists no TPs, no FPs, and no FNs
-        meaningless_indeces = torch.nonzero((tp | fn | fp) == 0).cpu()
+        meaningless_indeces = B.nonzero((tp | fn | fp) == 0).cpu()
         if ignore_index is None:
             ignore_index = meaningless_indeces
         else:
-            ignore_index = torch.unique(torch.cat((meaningless_indeces, torch.tensor([[ignore_index]]))))
+            ignore_index = B.unique(B.cat((meaningless_indeces, B.tensor([[ignore_index]]))))
 
     if ignore_index is not None:
         if average not in (AvgMethod.MICRO, AvgMethod.SAMPLES) and mdmc_average == MDMCAverageMethod.SAMPLEWISE:
@@ -208,8 +208,8 @@ def fbeta(
 
     Example:
         >>> from torchmetrics.functional import fbeta
-        >>> target = torch.tensor([0, 1, 2, 0, 1, 2])
-        >>> preds = torch.tensor([0, 2, 1, 0, 0, 1])
+        >>> target = B.tensor([0, 1, 2, 0, 1, 2])
+        >>> preds = B.tensor([0, 2, 1, 0, 0, 1])
         >>> fbeta(preds, target, num_classes=3, beta=0.5)
         tensor(0.3333)
 
@@ -343,8 +343,8 @@ def f1(
 
     Example:
         >>> from torchmetrics.functional import f1
-        >>> target = torch.tensor([0, 1, 2, 0, 1, 2])
-        >>> preds = torch.tensor([0, 2, 1, 0, 0, 1])
+        >>> target = B.tensor([0, 1, 2, 0, 1, 2])
+        >>> preds = B.tensor([0, 2, 1, 0, 0, 1])
         >>> f1(preds, target, num_classes=3)
         tensor(0.3333)
     """

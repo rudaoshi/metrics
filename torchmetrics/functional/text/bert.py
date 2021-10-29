@@ -18,9 +18,9 @@ import warnings
 from collections import Counter, defaultdict
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
-import torch
-from torch import Tensor
-from torch.utils.data import DataLoader, Dataset
+import pangu.core.backend as B
+from pangu.core.backend import Tensor, nn
+from pangu.core.backend.data import DataLoader, Dataset
 
 from torchmetrics.utilities.imports import _TQDM_AVAILABLE, _TRANSFORMERS_AVAILABLE
 
@@ -95,7 +95,7 @@ def _process_attention_mask_for_special_tokens(attention_mask: Tensor) -> Tensor
     attention_mask[:, 0] = 0
     # Make attention_mask zero for [SEP] token
     sep_token_position = (attention_mask - 0.1).cumsum(-1).argmax(-1)
-    attention_mask[torch.arange(attention_mask.size(0)).long(), sep_token_position] = 0
+    attention_mask[B.arange(attention_mask.size(0)).long(), sep_token_position] = 0
     return attention_mask
 
 
@@ -108,7 +108,7 @@ def _sort_data_according_length(input_ids: Tensor, attention_mask: Tensor) -> Tu
 
 
 def _input_data_collator(
-    batch: Dict[str, Tensor], device: Optional[Union[str, torch.device]] = None
+    batch: Dict[str, Tensor], device: Optional[Union[str, B.device]] = None
 ) -> Dict[str, Tensor]:
     """Helper function that trims model inputs to the longest sequence within the batch and put the input on the
     proper device."""
@@ -123,11 +123,11 @@ def _output_data_collator(model_output: Tensor, attention_mask: Tensor, target_l
     """Helper function that pads the model output and attention mask to the target length."""
     zeros_shape = list(model_output.shape)
     zeros_shape[2] = target_len - zeros_shape[2]
-    model_output = torch.cat(
-        [model_output, torch.zeros(zeros_shape, dtype=model_output.dtype).to(model_output.device)], dim=2
+    model_output = B.cat(
+        [model_output, B.zeros(zeros_shape, dtype=model_output.dtype).to(model_output.device)], dim=2
     )
-    zeros = torch.zeros(zeros_shape[0], zeros_shape[2], dtype=attention_mask.dtype).to(attention_mask.device)
-    attention_mask = torch.cat([attention_mask, zeros], dim=1)
+    zeros = B.zeros(zeros_shape[0], zeros_shape[2], dtype=attention_mask.dtype).to(attention_mask.device)
+    attention_mask = B.cat([attention_mask, zeros], dim=1)
     return model_output, attention_mask
 
 
@@ -172,7 +172,7 @@ class TextDataset(Dataset):
         attention_mask = self.text["attention_mask"][idx, :]
         inputs_dict = {"input_ids": input_ids, "attention_mask": attention_mask}
         if self.idf:
-            input_ids_idf = torch.tensor([self.tokens_idf[input_idx] for input_idx in input_ids.tolist()])
+            input_ids_idf = B.tensor([self.tokens_idf[input_idx] for input_idx in input_ids.tolist()])
             inputs_dict["input_ids_idf"] = input_ids_idf
         return inputs_dict
 
@@ -201,7 +201,7 @@ class TextDataset(Dataset):
 
     @staticmethod
     def _set_of_tokens(input_ids: Tensor) -> Set:
-        """Return set of tokens from the `input_ids` `torch.Tensor`."""
+        """Return set of tokens from the `input_ids` `B.Tensor`."""
         return set(input_ids.tolist())
 
 
@@ -218,9 +218,9 @@ class TokenizedDataset(TextDataset):
         """
         Args:
             input_ids:
-                Input ids (`torch.Tensor`).
+                Input ids (`B.Tensor`).
             attention_mask:
-                Attention mask (`torch.Tensor`).
+                Attention mask (`B.Tensor`).
             idf:
                 An indication of whether calculate token inverse document frequencies to weight the model embeddings.
             tokens_idf:
@@ -248,7 +248,7 @@ def _check_shape_of_model_output(output: Tensor, input_ids: Tensor) -> None:
     invalid_out_shape = len(output.shape) != 3 or output.shape[0] != bs or output.shape[1] != seq_len
     if invalid_out_shape:
         raise ValueError(
-            "The model output must be `torch.Tensor` of a shape `[batch_size, seq_len, model_dim]` "
+            "The model output must be `B.Tensor` of a shape `[batch_size, seq_len, model_dim]` "
             f"i.e. [{bs}, {seq_len}. , `model_dim`], but got {output.shape}."
         )
 
@@ -256,18 +256,18 @@ def _check_shape_of_model_output(output: Tensor, input_ids: Tensor) -> None:
 def _get_embeddings_and_idf_scale(
     dataloader: DataLoader,
     target_len: int,
-    model: torch.nn.Module,
-    device: Optional[Union[str, torch.device]] = None,
+    model: nn.Module,
+    device: Optional[Union[str, B.device]] = None,
     num_layers: Optional[int] = None,
     all_layers: bool = False,
     idf: bool = False,
     verbose: bool = False,
-    user_forward_fn: Callable[[torch.nn.Module, Dict[str, Tensor]], Tensor] = None,
+    user_forward_fn: Callable[[nn.Module, Dict[str, Tensor]], Tensor] = None,
 ) -> Tuple[Tensor, Tensor]:
     """Calculate sentence embeddings and the inverse-document-frequence scaling factor.
     Args:
         dataloader:
-            `torch.utils.data.DataLoader` instance.
+            `B.utils.data.DataLoader` instance.
         target_len:
             A length of the longest sequence in the data. Used for padding the model output.
         model:
@@ -284,11 +284,11 @@ def _get_embeddings_and_idf_scale(
             An indication of whether a progress bar to be displayed during the embeddings calculation.
         user_forward_fn:
             A user's own forward function used in a combination with `user_model`. This function must take `user_model`
-            and a python dictionary of containing `"input_ids"` and `"attention_mask"` represented by `torch.Tensor`
-            as an input and return the model's output represented by the single `torch.Tensor`.
+            and a python dictionary of containing `"input_ids"` and `"attention_mask"` represented by `B.Tensor`
+            as an input and return the model's output represented by the single `B.Tensor`.
 
     Return:
-        A tuple of torch.Tensors containing the model's embeddings and the normalized tokens IDF.
+        A tuple of B.Tensors containing the model's embeddings and the normalized tokens IDF.
         When `idf = False`, tokens IDF is not calculated, and a matrix of mean weights is returned instead.
         For a single sentence, `mean_weight = 1/seq_len`, where `seq_len` is a sum over the corresponding
         `attention_mask`.
@@ -300,7 +300,7 @@ def _get_embeddings_and_idf_scale(
     embeddings_list: List[Tensor] = []
     idf_scale_list: List[Tensor] = []
     for batch in _get_progress_bar(dataloader, verbose):
-        with torch.no_grad():
+        with B.no_grad():
             batch = _input_data_collator(batch, device)
             # Output shape: batch_size x num_layers OR 1 x sequence_length x bert_dim
             if not all_layers:
@@ -317,13 +317,13 @@ def _get_embeddings_and_idf_scale(
                         "The option `all_layers=True` can be used only with default `transformers` models."
                     )
                 out = model(batch["input_ids"], batch["attention_mask"], output_hidden_states=True)
-                out = torch.cat([o.unsqueeze(1) for o in out.hidden_states], dim=1)
+                out = B.cat([o.unsqueeze(1) for o in out.hidden_states], dim=1)
 
         out /= out.norm(dim=-1).unsqueeze(-1)  # normalize embeddings
         out, attention_mask = _output_data_collator(out, batch["attention_mask"], target_len)
         processed_attention_mask = _process_attention_mask_for_special_tokens(attention_mask)
         # Multiply embeddings with attention_mask (b=batch_size, l=num_layers, s=seq_len, d=emb_dim)
-        out = torch.einsum("blsd, bs -> blsd", out, processed_attention_mask)
+        out = B.einsum("blsd, bs -> blsd", out, processed_attention_mask)
         embeddings_list.append(out.cpu())
 
         # Calculate weighted (w.r.t. sentence length) input_ids IDF matrix
@@ -333,8 +333,8 @@ def _get_embeddings_and_idf_scale(
         input_ids_idf /= input_ids_idf.sum(-1, keepdim=True)
         idf_scale_list.append(input_ids_idf)
 
-    embeddings = torch.cat(embeddings_list)
-    idf_scale = torch.cat(idf_scale_list)
+    embeddings = B.cat(embeddings_list)
+    idf_scale = B.cat(idf_scale_list)
 
     return embeddings, idf_scale
 
@@ -343,7 +343,7 @@ def _get_scaled_precision_or_recall(cos_sim: Tensor, metric: str, idf_scale: Ten
     """Helper function that calculates precision or recall, transpose it and scale it with idf_scale factor."""
     dim = 3 if metric == "precision" else 2
     res = cos_sim.max(dim=dim).values
-    res = torch.einsum("bls, bs -> bls", res, idf_scale).sum(-1)
+    res = B.einsum("bls, bs -> bls", res, idf_scale).sum(-1)
     # We transpose the results and squeeze if possible to match the format of the original BERTScore implementation
     res = res.transpose(0, 1).squeeze()
     return res
@@ -364,13 +364,13 @@ def _get_precision_recall_f1(
         Tensors containing precision, recall and F1 score, respectively.
     """
     # Dimensions: b = batch_size, l = num_layers, p = predictions_seq_len, r = references_seq_len, d = bert_dim
-    cos_sim = torch.einsum("blpd, blrd -> blpr", pred_embeddings, ref_embeddings)
+    cos_sim = B.einsum("blpd, blrd -> blpr", pred_embeddings, ref_embeddings)
     # Final metrics shape = (batch_size * num_layers | batch_size)
     precision = _get_scaled_precision_or_recall(cos_sim, "precision", pred_idf_scale)
     recall = _get_scaled_precision_or_recall(cos_sim, "recall", ref_idf_scale)
 
     f1_score = 2 * precision * recall / (precision + recall)
-    f1_score = f1_score.masked_fill(torch.isnan(f1_score), 0.0)
+    f1_score = f1_score.masked_fill(B.isnan(f1_score), 0.0)
 
     return precision, recall, f1_score
 
@@ -389,7 +389,7 @@ def _read_csv_from_local_file(baseline_path: str) -> Tensor:
     with open(baseline_path) as fname:
         csv_file = csv.reader(fname)
         baseline_list = [[float(item) for item in row] for idx, row in enumerate(csv_file) if idx > 0]
-    baseline = torch.tensor(baseline_list)[:, 1:]
+    baseline = B.tensor(baseline_list)[:, 1:]
     return baseline
 
 
@@ -404,7 +404,7 @@ def _read_csv_from_url(baseline_url: str) -> Tensor:
             for idx, row in enumerate(http_request)
             if idx > 0
         ]
-        baseline = torch.tensor(baseline_list)[:, 1:]
+        baseline = B.tensor(baseline_list)[:, 1:]
     return baseline
 
 
@@ -442,7 +442,7 @@ def _rescale_metrics_with_baseline(
     """Rescale the computed metrics with the pre-computed baseline."""
     if num_layers is None and all_layers is False:
         num_layers = -1
-    all_metrics = torch.stack([precision, recall, f1_score], dim=-1)
+    all_metrics = B.stack([precision, recall, f1_score], dim=-1)
     baseline_scale = baseline.unsqueeze(1) if all_layers else baseline[num_layers]
     all_metrics = (all_metrics - baseline_scale) / (1 - baseline_scale)
 
@@ -455,12 +455,12 @@ def bert_score(
     model_name_or_path: Optional[str] = None,
     num_layers: Optional[int] = None,
     all_layers: bool = False,
-    model: Optional[torch.nn.Module] = None,
+    model: Optional[nn.Module] = None,
     user_tokenizer: Any = None,
-    user_forward_fn: Callable[[torch.nn.Module, Dict[str, Tensor]], Tensor] = None,
+    user_forward_fn: Callable[[nn.Module, Dict[str, Tensor]], Tensor] = None,
     verbose: bool = False,
     idf: bool = False,
-    device: Optional[Union[str, torch.device]] = None,
+    device: Optional[Union[str, B.device]] = None,
     max_length: int = 512,
     batch_size: int = 64,
     num_threads: int = 4,
@@ -479,11 +479,11 @@ def bert_score(
 
     Args:
         predictions:
-            Either an iterable of predicted sentences or a `Dict[str, torch.Tensor]` containing `input_ids` and
-            `attention_mask` `torch.Tensor`.
+            Either an iterable of predicted sentences or a `Dict[str, B.Tensor]` containing `input_ids` and
+            `attention_mask` `B.Tensor`.
         references:
-            Either an iterable of target sentences or a `Dict[str, torch.Tensor]` containing `input_ids` and
-            `attention_mask` `torch.Tensor`.
+            Either an iterable of target sentences or a `Dict[str, B.Tensor]` containing `input_ids` and
+            `attention_mask` `B.Tensor`.
         model_name_or_path:
             A name or a model path used to load `transformers` pretrained model.
         num_layers:
@@ -492,18 +492,18 @@ def bert_score(
             An indication of whether the representation from all model's layers should be used.
             If `all_layers = True`, the argument `num_layers` is ignored.
         model:
-            A user's own model. Must be of `torch.nn.Module` instance.
+            A user's own model. Must be of `nn.Module` instance.
         user_tokenizer:
             A user's own tokenizer used with the own model. This must be an instance with the `__call__` method.
             This method must take an iterable of sentences (`List[str]`) and must return a python dictionary
-            containing `"input_ids"` and `"attention_mask"` represented by `torch.Tensor`. It is up to the user's model
-            of whether `"input_ids"` is a `torch.Tensor` of input ids or embedding vectors.
+            containing `"input_ids"` and `"attention_mask"` represented by `B.Tensor`. It is up to the user's model
+            of whether `"input_ids"` is a `B.Tensor` of input ids or embedding vectors.
             This tokenizer must prepend an equivalent of `[CLS]` token and append an equivalent of `[SEP]` token
             as `transformers` tokenizer does.
         user_forward_fn:
             A user's own forward function used in a combination with `user_model`. This function must take `user_model`
-            and a python dictionary of containing `"input_ids"` and `"attention_mask"` represented by `torch.Tensor`
-            as an input and return the model's output represented by the single `torch.Tensor`.
+            and a python dictionary of containing `"input_ids"` and `"attention_mask"` represented by `B.Tensor`
+            as an input and return the model's output represented by the single `B.Tensor`.
         verbose:
             An indication of whether a progress bar to be displayed during the embeddings calculation.
         idf:

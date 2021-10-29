@@ -14,9 +14,9 @@
 from typing import Any, Callable, List, Optional, Union
 
 import numpy as np
-import torch
-from torch import Tensor
-from torch.autograd import Function
+import pangu.core.backend as B
+from pangu.core.backend import Tensor
+from pangu.core.backend.autograd import Function
 
 from torchmetrics.metric import Metric
 from torchmetrics.utilities import rank_zero_info, rank_zero_warn
@@ -27,7 +27,7 @@ if _TORCH_FIDELITY_AVAILABLE:
     from torch_fidelity.feature_extractor_inceptionv3 import FeatureExtractorInceptionV3
 else:
 
-    class FeatureExtractorInceptionV3(torch.nn.Module):  # type: ignore
+    class FeatureExtractorInceptionV3(B.nn.Module):  # type: ignore
         pass
 
 
@@ -67,7 +67,7 @@ class MatrixSquareRoot(Function):
         # Issue: https://github.com/pytorch/pytorch/issues/9983
         m = input_data.detach().cpu().numpy().astype(np.float_)
         scipy_res, _ = scipy.linalg.sqrtm(m, disp=False)
-        sqrtm = torch.from_numpy(scipy_res.real).to(input_data)
+        sqrtm = B.from_numpy(scipy_res.real).to(input_data)
         ctx.save_for_backward(sqrtm)
         return sqrtm
 
@@ -85,7 +85,7 @@ class MatrixSquareRoot(Function):
             # dX = (d(X^{1/2})X^{1/2} + X^{1/2}(dX^{1/2}).
             grad_sqrtm = scipy.linalg.solve_sylvester(sqrtm, sqrtm, gm)
 
-            grad_input = torch.from_numpy(grad_sqrtm).to(grad_output)
+            grad_input = B.from_numpy(grad_sqrtm).to(grad_output)
         return grad_input
 
 
@@ -113,13 +113,13 @@ def _compute_fid(mu1: Tensor, sigma1: Tensor, mu2: Tensor, sigma2: Tensor, eps: 
 
     covmean = sqrtm(sigma1.mm(sigma2))
     # Product might be almost singular
-    if not torch.isfinite(covmean).all():
+    if not B.isfinite(covmean).all():
         rank_zero_info(f"FID calculation produces singular product; adding {eps} to diagonal of covariance estimates")
-        offset = torch.eye(sigma1.size(0), device=mu1.device, dtype=mu1.dtype) * eps
+        offset = B.eye(sigma1.size(0), device=mu1.device, dtype=mu1.dtype) * eps
         covmean = sqrtm((sigma1 + offset).mm(sigma2 + offset))
 
-    tr_covmean = torch.trace(covmean)
-    return diff.dot(diff) + torch.trace(sigma1) + torch.trace(sigma2) - 2 * tr_covmean
+    tr_covmean = B.trace(covmean)
+    return diff.dot(diff) + B.trace(sigma1) + B.trace(sigma2) - 2 * tr_covmean
 
 
 class FID(Metric):
@@ -186,16 +186,16 @@ class FID(Metric):
         ValueError:
             If ``feature`` is set to an ``int`` not in [64, 192, 768, 2048]
         TypeError:
-            If ``feature`` is not an ``str``, ``int`` or ``torch.nn.Module``
+            If ``feature`` is not an ``str``, ``int`` or ``B.nn.Module``
 
     Example:
-        >>> import torch
-        >>> _ = torch.manual_seed(123)
+        >>> import pangu.core.backend as B
+        >>> _ = B.manual_seed(123)
         >>> from torchmetrics import FID
         >>> fid = FID(feature=64)  # doctest: +SKIP
         >>> # generate two slightly overlapping image intensity distributions
-        >>> imgs_dist1 = torch.randint(0, 200, (100, 3, 299, 299), dtype=torch.uint8)  # doctest: +SKIP
-        >>> imgs_dist2 = torch.randint(100, 255, (100, 3, 299, 299), dtype=torch.uint8)  # doctest: +SKIP
+        >>> imgs_dist1 = B.randint(0, 200, (100, 3, 299, 299), dtype=B.uint8)  # doctest: +SKIP
+        >>> imgs_dist2 = B.randint(100, 255, (100, 3, 299, 299), dtype=B.uint8)  # doctest: +SKIP
         >>> fid.update(imgs_dist1, real=True)  # doctest: +SKIP
         >>> fid.update(imgs_dist2, real=False)  # doctest: +SKIP
         >>> fid.compute()  # doctest: +SKIP
@@ -207,7 +207,7 @@ class FID(Metric):
 
     def __init__(
         self,
-        feature: Union[int, torch.nn.Module] = 2048,
+        feature: Union[int, B.nn.Module] = 2048,
         compute_on_step: bool = False,
         dist_sync_on_step: bool = False,
         process_group: Optional[Any] = None,
@@ -239,7 +239,7 @@ class FID(Metric):
                 )
 
             self.inception = NoTrainInceptionV3(name="inception-v3-compat", features_list=[str(feature)])
-        elif isinstance(feature, torch.nn.Module):
+        elif isinstance(feature, B.nn.Module):
             self.inception = feature
         else:
             raise TypeError("Got unknown input to argument `feature`")

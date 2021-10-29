@@ -13,15 +13,14 @@
 # limitations under the License.
 from typing import Optional, Sequence, Tuple
 
-import torch
-from torch import Tensor
-from torch.nn import functional as F
+import pangu.core.backend as B
+from pangu.core.backend import Tensor
 
 from torchmetrics.utilities.checks import _check_same_shape
 from torchmetrics.utilities.distributed import reduce
 
 
-def _gaussian(kernel_size: int, sigma: float, dtype: torch.dtype, device: torch.device) -> Tensor:
+def _gaussian(kernel_size: int, sigma: float, dtype: B.dtype, device: B.device) -> Tensor:
     """Computes 1D gaussian kernel.
 
     Args:
@@ -31,16 +30,16 @@ def _gaussian(kernel_size: int, sigma: float, dtype: torch.dtype, device: torch.
         device: device of the output tensor
 
     Example:
-        >>> _gaussian(3, 1, torch.float, 'cpu')
+        >>> _gaussian(3, 1, B.float, 'cpu')
         tensor([[0.2741, 0.4519, 0.2741]])
     """
-    dist = torch.arange(start=(1 - kernel_size) / 2, end=(1 + kernel_size) / 2, step=1, dtype=dtype, device=device)
-    gauss = torch.exp(-torch.pow(dist / sigma, 2) / 2)
+    dist = B.arange(start=(1 - kernel_size) / 2, end=(1 + kernel_size) / 2, step=1, dtype=dtype, device=device)
+    gauss = B.exp(-B.pow(dist / sigma, 2) / 2)
     return (gauss / gauss.sum()).unsqueeze(dim=0)  # (1, kernel_size)
 
 
 def _gaussian_kernel(
-    channel: int, kernel_size: Sequence[int], sigma: Sequence[float], dtype: torch.dtype, device: torch.device
+    channel: int, kernel_size: Sequence[int], sigma: Sequence[float], dtype: B.dtype, device: B.device
 ) -> Tensor:
     """Computes 2D gaussian kernel.
 
@@ -52,7 +51,7 @@ def _gaussian_kernel(
         device: device of the output tensor
 
     Example:
-        >>> _gaussian_kernel(1, (5,5), (1,1), torch.float, "cpu")
+        >>> _gaussian_kernel(1, (5,5), (1,1), B.float, "cpu")
         tensor([[[[0.0030, 0.0133, 0.0219, 0.0133, 0.0030],
                   [0.0133, 0.0596, 0.0983, 0.0596, 0.0133],
                   [0.0219, 0.0983, 0.1621, 0.0983, 0.0219],
@@ -62,7 +61,7 @@ def _gaussian_kernel(
 
     gaussian_kernel_x = _gaussian(kernel_size[0], sigma[0], dtype, device)
     gaussian_kernel_y = _gaussian(kernel_size[1], sigma[1], dtype, device)
-    kernel = torch.matmul(gaussian_kernel_x.t(), gaussian_kernel_y)  # (kernel_size, 1) * (1, kernel_size)
+    kernel = B.matmul(gaussian_kernel_x.t(), gaussian_kernel_y)  # (kernel_size, 1) * (1, kernel_size)
 
     return kernel.expand(channel, 1, kernel_size[0], kernel_size[1])
 
@@ -118,7 +117,7 @@ def _ssim_compute(
         k2: Parameter of SSIM. Default: 0.03
 
     Example:
-        >>> preds = torch.rand([16, 1, 16, 16])
+        >>> preds = B.rand([16, 1, 16, 16])
         >>> target = preds * 0.75
         >>> preds, target = _ssim_update(preds, target)
         >>> _ssim_compute(preds, target)
@@ -149,11 +148,11 @@ def _ssim_compute(
     pad_h = (kernel_size[0] - 1) // 2
     pad_w = (kernel_size[1] - 1) // 2
 
-    preds = F.pad(preds, (pad_h, pad_h, pad_w, pad_w), mode="reflect")
-    target = F.pad(target, (pad_h, pad_h, pad_w, pad_w), mode="reflect")
+    preds = B.pad(preds, (pad_h, pad_h, pad_w, pad_w), mode="reflect")
+    target = B.pad(target, (pad_h, pad_h, pad_w, pad_w), mode="reflect")
 
-    input_list = torch.cat((preds, target, preds * preds, target * target, preds * target))  # (5 * B, C, H, W)
-    outputs = F.conv2d(input_list, kernel, groups=channel)
+    input_list = B.cat((preds, target, preds * preds, target * target, preds * target))  # (5 * B, C, H, W)
+    outputs = B.conv2d(input_list, kernel, groups=channel)
     output_list = outputs.split(preds.shape[0])
 
     mu_pred_sq = output_list[0].pow(2)
@@ -217,7 +216,7 @@ def ssim(
 
     Example:
         >>> from torchmetrics.functional import ssim
-        >>> preds = torch.rand([16, 1, 16, 16])
+        >>> preds = B.rand([16, 1, 16, 16])
         >>> target = preds * 0.75
         >>> ssim(preds, target)
         tensor(0.9219)

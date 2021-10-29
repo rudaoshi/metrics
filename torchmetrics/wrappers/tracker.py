@@ -14,8 +14,8 @@
 from copy import deepcopy
 from typing import Any, Tuple, Union
 
-import torch
-from torch import Tensor, nn
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor, nn
 
 from torchmetrics.metric import Metric
 
@@ -41,12 +41,12 @@ class MetricTracker(nn.ModuleList):
     Example:
 
         >>> from torchmetrics import Accuracy, MetricTracker
-        >>> _ = torch.manual_seed(42)
+        >>> _ = B.manual_seed(42)
         >>> tracker = MetricTracker(Accuracy(num_classes=10))
         >>> for epoch in range(5):
         ...     tracker.increment()
         ...     for batch_idx in range(5):
-        ...         preds, target = torch.randint(10, (100,)), torch.randint(10, (100,))
+        ...         preds, target = B.randint(10, (100,)), B.randint(10, (100,))
         ...         tracker.update(preds, target)
         ...     print(f"current acc={tracker.compute()}")  # doctest: +NORMALIZE_WHITESPACE
         current acc=0.1120000034570694
@@ -96,7 +96,7 @@ class MetricTracker(nn.ModuleList):
     def compute_all(self) -> Tensor:
         """Compute the metric value for all tracked metrics."""
         self._check_for_increment("compute_all")
-        return torch.stack([metric.compute() for i, metric in enumerate(self) if i != 0], dim=0)
+        return B.stack([metric.compute() for i, metric in enumerate(self) if i != 0], dim=0)
 
     def reset(self) -> None:
         """Resets the current metric being tracked."""
@@ -116,7 +116,7 @@ class MetricTracker(nn.ModuleList):
         Returns:
             The best metric value, and optionally the timestep.
         """
-        fn = torch.max if self.maximize else torch.min
+        fn = B.max if self.maximize else B.min
         idx, max = fn(self.compute_all(), 0)
         if return_step:
             return idx.item(), max.item()

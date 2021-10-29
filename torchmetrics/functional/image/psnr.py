@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Optional, Tuple, Union
 
-import torch
-from torch import Tensor, tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor, tensor
 
 from torchmetrics.utilities import rank_zero_warn, reduce
 
@@ -42,16 +42,16 @@ def _psnr_compute(
             - ``'none'``: no reduction will be applied
 
     Example:
-        >>> preds = torch.tensor([[0.0, 1.0], [2.0, 3.0]])
-        >>> target = torch.tensor([[3.0, 2.0], [1.0, 0.0]])
+        >>> preds = B.tensor([[0.0, 1.0], [2.0, 3.0]])
+        >>> target = B.tensor([[3.0, 2.0], [1.0, 0.0]])
         >>> data_range = target.max() - target.min()
         >>> sum_squared_error, n_obs = _psnr_update(preds, target)
         >>> _psnr_compute(sum_squared_error, n_obs, data_range)
         tensor(2.5527)
     """
 
-    psnr_base_e = 2 * torch.log(data_range) - torch.log(sum_squared_error / n_obs)
-    psnr_vals = psnr_base_e * (10 / torch.log(tensor(base)))
+    psnr_base_e = 2 * B.log(data_range) - B.log(sum_squared_error / n_obs)
+    psnr_vals = psnr_base_e * (10 / B.log(tensor(base)))
     return reduce(psnr_vals, reduction=reduction)
 
 
@@ -71,12 +71,12 @@ def _psnr_update(
     """
 
     if dim is None:
-        sum_squared_error = torch.sum(torch.pow(preds - target, 2))
+        sum_squared_error = B.sum(B.pow(preds - target, 2))
         n_obs = tensor(target.numel(), device=target.device)
         return sum_squared_error, n_obs
 
     diff = preds - target
-    sum_squared_error = torch.sum(diff * diff, dim=dim)
+    sum_squared_error = B.sum(diff * diff, dim=dim)
 
     if isinstance(dim, int):
         dim_list = [dim]
@@ -126,8 +126,8 @@ def psnr(
 
     Example:
         >>> from torchmetrics.functional import psnr
-        >>> pred = torch.tensor([[0.0, 1.0], [2.0, 3.0]])
-        >>> target = torch.tensor([[3.0, 2.0], [1.0, 0.0]])
+        >>> pred = B.tensor([[0.0, 1.0], [2.0, 3.0]])
+        >>> target = B.tensor([[3.0, 2.0], [1.0, 0.0]])
         >>> psnr(pred, target)
         tensor(2.5527)
 
@@ -139,7 +139,7 @@ def psnr(
 
     if data_range is None:
         if dim is not None:
-            # Maybe we could use `torch.amax(target, dim=dim) - torch.amin(target, dim=dim)` in PyTorch 1.7 to calculate
+            # Maybe we could use `B.amax(target, dim=dim) - B.amin(target, dim=dim)` in PyTorch 1.7 to calculate
             # `data_range` in the future.
             raise ValueError("The `data_range` must be given when `dim` is not None.")
 

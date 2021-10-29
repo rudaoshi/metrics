@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Optional, Tuple
 
-import torch
-from torch import Tensor, tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor, tensor
 
 from torchmetrics.functional.classification.stat_scores import _reduce_stat_scores, _stat_scores_update
 from torchmetrics.utilities.checks import _check_classification_inputs, _input_format_classification, _input_squeeze
@@ -49,8 +49,8 @@ def _mode(
             than what they appear to be.
 
     Example:
-        >>> target = torch.tensor([0, 1, 2, 3])
-        >>> preds = torch.tensor([0, 2, 1, 3])
+        >>> target = B.tensor([0, 1, 2, 3])
+        >>> preds = B.tensor([0, 2, 1, 3])
         >>> _mode(preds, target, 0.5, None, None, None)
         <DataType.MULTICLASS: 'multi-class'>
     """
@@ -134,8 +134,8 @@ def _accuracy_compute(
         mode: Mode of the input tensors
 
     Example:
-        >>> preds = torch.tensor([0, 2, 1, 3])
-        >>> target = torch.tensor([0, 1, 2, 3])
+        >>> preds = B.tensor([0, 2, 1, 3])
+        >>> target = B.tensor([0, 1, 2, 3])
         >>> threshold = 0.5
         >>> reduce = average = 'micro'
         >>> mdmc_average = 'global'
@@ -154,8 +154,8 @@ def _accuracy_compute(
         >>> _accuracy_compute(tp, fp, tn, fn, average, mdmc_average, mode)
         tensor(0.5000)
 
-        >>> target = torch.tensor([0, 1, 2])
-        >>> preds = torch.tensor([[0.1, 0.9, 0], [0.3, 0.1, 0.6], [0.2, 0.5, 0.3]])
+        >>> target = B.tensor([0, 1, 2])
+        >>> preds = B.tensor([[0.1, 0.9, 0], [0.3, 0.1, 0.6], [0.2, 0.5, 0.3]])
         >>> top_k, threshold = 2, 0.5
         >>> reduce = average = 'micro'
         >>> mdmc_average = 'global'
@@ -190,7 +190,7 @@ def _accuracy_compute(
 
     if average == AverageMethod.NONE and mdmc_average != MDMCAverageMethod.SAMPLEWISE:
         # a class is not present if there exists no TPs, no FPs, and no FNs
-        meaningless_indeces = torch.nonzero((tp | fn | fp) == 0).cpu()
+        meaningless_indeces = B.nonzero((tp | fn | fp) == 0).cpu()
         numerator[meaningless_indeces, ...] = -1
         denominator[meaningless_indeces, ...] = -1
 
@@ -376,15 +376,15 @@ def accuracy(
             If ``top_k`` is not an ``integer`` larger than ``0``.
 
     Example:
-        >>> import torch
+        >>> import pangu.core.backend as B
         >>> from torchmetrics.functional import accuracy
-        >>> target = torch.tensor([0, 1, 2, 3])
-        >>> preds = torch.tensor([0, 2, 1, 3])
+        >>> target = B.tensor([0, 1, 2, 3])
+        >>> preds = B.tensor([0, 2, 1, 3])
         >>> accuracy(preds, target)
         tensor(0.5000)
 
-        >>> target = torch.tensor([0, 1, 2])
-        >>> preds = torch.tensor([[0.1, 0.9, 0], [0.3, 0.1, 0.6], [0.2, 0.5, 0.3]])
+        >>> target = B.tensor([0, 1, 2])
+        >>> preds = B.tensor([[0.1, 0.9, 0], [0.3, 0.1, 0.6], [0.2, 0.5, 0.3]])
         >>> accuracy(preds, target, top_k=2)
         tensor(0.6667)
     """

@@ -15,11 +15,11 @@
 # Library Name: torchtext
 # Authors: torchtext authors and @sluks
 # Date: 2020-07-18
-# Link: https://pytorch.org/text/_modules/torchtext/data/metrics.html#bleu_score
+# Link: https://pyB.org/text/_modules/torchtext/data/metrics.html#bleu_score
 from typing import Any, Callable, Optional, Sequence
 
-import torch
-from torch import Tensor, tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor, tensor
 
 from torchmetrics import Metric
 from torchmetrics.functional.text.bleu import _bleu_score_compute, _bleu_score_update
@@ -85,10 +85,10 @@ class BLEUScore(Metric):
         self.n_gram = n_gram
         self.smooth = smooth
 
-        self.add_state("trans_len", tensor(0, dtype=torch.float), dist_reduce_fx="sum")
-        self.add_state("ref_len", tensor(0, dtype=torch.float), dist_reduce_fx="sum")
-        self.add_state("numerator", torch.zeros(self.n_gram), dist_reduce_fx="sum")
-        self.add_state("denominator", torch.zeros(self.n_gram), dist_reduce_fx="sum")
+        self.add_state("trans_len", tensor(0, dtype=B.float), dist_reduce_fx="sum")
+        self.add_state("ref_len", tensor(0, dtype=B.float), dist_reduce_fx="sum")
+        self.add_state("numerator", B.zeros(self.n_gram), dist_reduce_fx="sum")
+        self.add_state("denominator", B.zeros(self.n_gram), dist_reduce_fx="sum")
 
     def update(  # type: ignore
         self, reference_corpus: Sequence[Sequence[Sequence[str]]], translate_corpus: Sequence[Sequence[str]]

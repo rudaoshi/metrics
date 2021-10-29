@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Any, Callable, Optional
 
-import torch
-from torch import Tensor, tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor, tensor
 
 from torchmetrics.functional.regression.mean_squared_log_error import (
     _mean_squared_log_error_compute,
@@ -42,8 +42,8 @@ class MeanSquaredLogError(Metric):
 
     Example:
         >>> from torchmetrics import MeanSquaredLogError
-        >>> target = torch.tensor([2.5, 5, 4, 8])
-        >>> preds = torch.tensor([3, 5, 2.5, 7])
+        >>> target = B.tensor([2.5, 5, 4, 8])
+        >>> preds = B.tensor([3, 5, 2.5, 7])
         >>> mean_squared_log_error = MeanSquaredLogError()
         >>> mean_squared_log_error(preds, target)
         tensor(0.0397)

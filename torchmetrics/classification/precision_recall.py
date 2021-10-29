@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Any, Callable, Optional
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.classification.stat_scores import StatScores
 from torchmetrics.functional.classification.precision_recall import _precision_compute, _recall_compute
@@ -110,8 +110,8 @@ class Precision(StatScores):
 
     Example:
         >>> from torchmetrics import Precision
-        >>> preds  = torch.tensor([2, 0, 2, 1])
-        >>> target = torch.tensor([1, 1, 2, 0])
+        >>> preds  = B.tensor([2, 0, 2, 1])
+        >>> target = B.tensor([1, 1, 2, 0])
         >>> precision = Precision(average='macro', num_classes=3)
         >>> precision(preds, target)
         tensor(0.1667)
@@ -260,8 +260,8 @@ class Recall(StatScores):
 
     Example:
         >>> from torchmetrics import Recall
-        >>> preds  = torch.tensor([2, 0, 2, 1])
-        >>> target = torch.tensor([1, 1, 2, 0])
+        >>> preds  = B.tensor([2, 0, 2, 1])
+        >>> target = B.tensor([1, 1, 2, 0])
         >>> recall = Recall(average='macro', num_classes=3)
         >>> recall(preds, target)
         tensor(0.3333)

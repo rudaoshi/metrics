@@ -11,8 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import torch
-from torch import Tensor, tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor, tensor
 
 from torchmetrics.utilities.checks import _check_retrieval_functional_inputs
 
@@ -45,5 +45,5 @@ def retrieval_r_precision(preds: Tensor, target: Tensor) -> Tensor:
     if not relevant_number:
         return tensor(0.0, device=preds.device)
 
-    relevant = target[torch.argsort(preds, dim=-1, descending=True)][:relevant_number].sum().float()
+    relevant = target[B.argsort(preds, dim=-1, descending=True)][:relevant_number].sum().float()
     return relevant / relevant_number

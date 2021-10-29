@@ -14,8 +14,8 @@
 
 from typing import Optional, Tuple
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.utilities.checks import _check_same_shape
 from torchmetrics.utilities.data import METRIC_EPS
@@ -37,12 +37,12 @@ def _kld_update(p: Tensor, q: Tensor, log_prob: bool) -> Tuple[Tensor, int]:
 
     total = p.shape[0]
     if log_prob:
-        measures = torch.sum(p.exp() * (p - q), axis=-1)
+        measures = B.sum(p.exp() * (p - q), axis=-1)
     else:
         p = p / p.sum(axis=-1, keepdim=True)
         q = q / q.sum(axis=-1, keepdim=True)
-        q = torch.clamp(q, METRIC_EPS)
-        measures = torch.sum(p * torch.log(p / q), axis=-1)
+        q = B.clamp(q, METRIC_EPS)
+        measures = B.sum(p * B.log(p / q), axis=-1)
 
     return measures, total
 
@@ -61,8 +61,8 @@ def _kld_compute(measures: Tensor, total: Tensor, reduction: Optional[str] = "me
             - ``'none'`` or ``None``: Returns score per sample
 
     Example:
-        >>> p = torch.tensor([[0.36, 0.48, 0.16]])
-        >>> q = torch.tensor([[1/3, 1/3, 1/3]])
+        >>> p = B.tensor([[0.36, 0.48, 0.16]])
+        >>> q = B.tensor([[1/3, 1/3, 1/3]])
         >>> measures, total = _kld_update(p, q, log_prob=False)
         >>> _kld_compute(measures, total)
         tensor(0.0853)
@@ -100,9 +100,9 @@ def kl_divergence(p: Tensor, q: Tensor, log_prob: bool = False, reduction: Optio
             - ``'none'`` or ``None``: Returns score per sample
 
     Example:
-        >>> import torch
-        >>> p = torch.tensor([[0.36, 0.48, 0.16]])
-        >>> q = torch.tensor([[1/3, 1/3, 1/3]])
+        >>> import pangu.core.backend as B
+        >>> p = B.tensor([[0.36, 0.48, 0.16]])
+        >>> q = B.tensor([[1/3, 1/3, 1/3]])
         >>> kl_divergence(p, q)
         tensor(0.0853)
     """

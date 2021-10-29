@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Any, List, Optional, Tuple
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.functional.regression.pearson import _pearson_corrcoef_compute, _pearson_corrcoef_update
 from torchmetrics.metric import Metric
@@ -78,8 +78,8 @@ class PearsonCorrcoef(Metric):
 
     Example:
         >>> from torchmetrics import PearsonCorrcoef
-        >>> target = torch.tensor([3, -0.5, 2, 7])
-        >>> preds = torch.tensor([2.5, 0.0, 2, 8])
+        >>> target = B.tensor([3, -0.5, 2, 7])
+        >>> preds = B.tensor([2.5, 0.0, 2, 8])
         >>> pearson = PearsonCorrcoef()
         >>> pearson(preds, target)
         tensor(0.9849)
@@ -107,12 +107,12 @@ class PearsonCorrcoef(Metric):
             process_group=process_group,
         )
 
-        self.add_state("mean_x", default=torch.zeros(1), dist_reduce_fx=None)
-        self.add_state("mean_y", default=torch.zeros(1), dist_reduce_fx=None)
-        self.add_state("var_x", default=torch.zeros(1), dist_reduce_fx=None)
-        self.add_state("var_y", default=torch.zeros(1), dist_reduce_fx=None)
-        self.add_state("corr_xy", default=torch.zeros(1), dist_reduce_fx=None)
-        self.add_state("n_total", default=torch.zeros(1), dist_reduce_fx=None)
+        self.add_state("mean_x", default=B.zeros(1), dist_reduce_fx=None)
+        self.add_state("mean_y", default=B.zeros(1), dist_reduce_fx=None)
+        self.add_state("var_x", default=B.zeros(1), dist_reduce_fx=None)
+        self.add_state("var_y", default=B.zeros(1), dist_reduce_fx=None)
+        self.add_state("corr_xy", default=B.zeros(1), dist_reduce_fx=None)
+        self.add_state("n_total", default=B.zeros(1), dist_reduce_fx=None)
 
     def update(self, preds: Tensor, target: Tensor) -> None:  # type: ignore
         """Update state with predictions and targets.

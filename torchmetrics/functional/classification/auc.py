@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Tuple
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 
 def _auc_update(x: Tensor, y: Tensor) -> Tuple[Tensor, Tensor]:
@@ -52,15 +52,15 @@ def _auc_compute_without_check(x: Tensor, y: Tensor, direction: float) -> Tensor
         direction: 1 if increaing, -1 if decreasing
 
     Example:
-        >>> x = torch.tensor([0, 1, 2, 3])
-        >>> y = torch.tensor([0, 1, 2, 2])
+        >>> x = B.tensor([0, 1, 2, 3])
+        >>> y = B.tensor([0, 1, 2, 2])
         >>> x, y = _auc_update(x, y)
         >>> _auc_compute_without_check(x, y, direction=1.0)
         tensor(4.)
     """
 
-    with torch.no_grad():
-        auc_: Tensor = torch.trapz(y, x) * direction
+    with B.no_grad():
+        auc_: Tensor = B.trapz(y, x) * direction
     return auc_
 
 
@@ -73,8 +73,8 @@ def _auc_compute(x: Tensor, y: Tensor, reorder: bool = False) -> Tensor:
         reorder: if True, will reorder the arrays to make it either increasing or decreasing
 
     Example:
-        >>> x = torch.tensor([0, 1, 2, 3])
-        >>> y = torch.tensor([0, 1, 2, 2])
+        >>> x = B.tensor([0, 1, 2, 3])
+        >>> y = B.tensor([0, 1, 2, 2])
         >>> x, y = _auc_update(x, y)
         >>> _auc_compute(x, y)
         tensor(4.)
@@ -82,10 +82,10 @@ def _auc_compute(x: Tensor, y: Tensor, reorder: bool = False) -> Tensor:
         tensor(4.)
     """
 
-    with torch.no_grad():
+    with B.no_grad():
         if reorder:
             # TODO: include stable=True arg when pytorch v1.9 is released
-            x, x_idx = torch.sort(x)
+            x, x_idx = B.sort(x)
             y = y[x_idx]
 
         dx = x[1:] - x[:-1]
@@ -122,8 +122,8 @@ def auc(x: Tensor, y: Tensor, reorder: bool = False) -> Tensor:
 
     Example:
         >>> from torchmetrics.functional import auc
-        >>> x = torch.tensor([0, 1, 2, 3])
-        >>> y = torch.tensor([0, 1, 2, 2])
+        >>> x = B.tensor([0, 1, 2, 3])
+        >>> y = B.tensor([0, 1, 2, 2])
         >>> auc(x, y)
         tensor(4.)
         >>> auc(x, y, reorder=True)

@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Any, List, Optional, Tuple, Union
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.functional.classification.average_precision import _average_precision_compute_with_precision_recall
 from torchmetrics.metric import Metric
@@ -33,11 +33,11 @@ def _recall_at_precision(
         )
 
     except ValueError:
-        max_recall = torch.tensor(0.0, device=recall.device, dtype=recall.dtype)
-        best_threshold = torch.tensor(0)
+        max_recall = B.tensor(0.0, device=recall.device, dtype=recall.dtype)
+        best_threshold = B.tensor(0)
 
     if max_recall == 0.0:
-        best_threshold = torch.tensor(1e6, device=thresholds.device, dtype=thresholds.dtype)
+        best_threshold = B.tensor(1e6, device=thresholds.device, dtype=thresholds.dtype)
 
     return max_recall, best_threshold
 
@@ -75,8 +75,8 @@ class BinnedPrecisionRecallCurve(Metric):
 
     Example (binary case):
         >>> from torchmetrics import BinnedPrecisionRecallCurve
-        >>> pred = torch.tensor([0, 0.1, 0.8, 0.4])
-        >>> target = torch.tensor([0, 1, 1, 0])
+        >>> pred = B.tensor([0, 0.1, 0.8, 0.4])
+        >>> target = B.tensor([0, 1, 1, 0])
         >>> pr_curve = BinnedPrecisionRecallCurve(num_classes=1, thresholds=5)
         >>> precision, recall, thresholds = pr_curve(pred, target)
         >>> precision
@@ -87,11 +87,11 @@ class BinnedPrecisionRecallCurve(Metric):
         tensor([0.0000, 0.2500, 0.5000, 0.7500, 1.0000])
 
     Example (multiclass case):
-        >>> pred = torch.tensor([[0.75, 0.05, 0.05, 0.05, 0.05],
+        >>> pred = B.tensor([[0.75, 0.05, 0.05, 0.05, 0.05],
         ...                      [0.05, 0.75, 0.05, 0.05, 0.05],
         ...                      [0.05, 0.05, 0.75, 0.05, 0.05],
         ...                      [0.05, 0.05, 0.05, 0.75, 0.05]])
-        >>> target = torch.tensor([0, 1, 3, 2])
+        >>> target = B.tensor([0, 1, 3, 2])
         >>> pr_curve = BinnedPrecisionRecallCurve(num_classes=5, thresholds=3)
         >>> precision, recall, thresholds = pr_curve(pred, target)
         >>> precision   # doctest: +NORMALIZE_WHITESPACE
@@ -135,19 +135,19 @@ class BinnedPrecisionRecallCurve(Metric):
         self.num_classes = num_classes
         if isinstance(thresholds, int):
             self.num_thresholds = thresholds
-            thresholds = torch.linspace(0, 1.0, thresholds)
+            thresholds = B.linspace(0, 1.0, thresholds)
             self.register_buffer("thresholds", thresholds)
         elif thresholds is not None:
             if not isinstance(thresholds, (list, Tensor)):
                 raise ValueError("Expected argument `thresholds` to either be an integer, list of floats or a tensor")
-            thresholds = torch.tensor(thresholds) if isinstance(thresholds, list) else thresholds
+            thresholds = B.tensor(thresholds) if isinstance(thresholds, list) else thresholds
             self.num_thresholds = thresholds.numel()
             self.register_buffer("thresholds", thresholds)
 
         for name in ("TPs", "FPs", "FNs"):
             self.add_state(
                 name=name,
-                default=torch.zeros(num_classes, self.num_thresholds, dtype=torch.float32),
+                default=B.zeros(num_classes, self.num_thresholds, dtype=B.float32),
                 dist_reduce_fx="sum",
             )
 
@@ -179,10 +179,10 @@ class BinnedPrecisionRecallCurve(Metric):
         recalls = self.TPs / (self.TPs + self.FNs + METRIC_EPS)
 
         # Need to guarantee that last precision=1 and recall=0, similar to precision_recall_curve
-        t_ones = torch.ones(self.num_classes, 1, dtype=precisions.dtype, device=precisions.device)
-        precisions = torch.cat([precisions, t_ones], dim=1)
-        t_zeros = torch.zeros(self.num_classes, 1, dtype=recalls.dtype, device=recalls.device)
-        recalls = torch.cat([recalls, t_zeros], dim=1)
+        t_ones = B.ones(self.num_classes, 1, dtype=precisions.dtype, device=precisions.device)
+        precisions = B.cat([precisions, t_ones], dim=1)
+        t_zeros = B.zeros(self.num_classes, 1, dtype=recalls.dtype, device=recalls.device)
+        recalls = B.cat([recalls, t_zeros], dim=1)
         if self.num_classes == 1:
             return precisions[0, :], recalls[0, :], self.thresholds
         return list(precisions), list(recalls), [self.thresholds for _ in range(self.num_classes)]
@@ -220,18 +220,18 @@ class BinnedAveragePrecision(BinnedPrecisionRecallCurve):
 
     Example (binary case):
         >>> from torchmetrics import BinnedAveragePrecision
-        >>> pred = torch.tensor([0, 1, 2, 3])
-        >>> target = torch.tensor([0, 1, 1, 1])
+        >>> pred = B.tensor([0, 1, 2, 3])
+        >>> target = B.tensor([0, 1, 1, 1])
         >>> average_precision = BinnedAveragePrecision(num_classes=1, thresholds=10)
         >>> average_precision(pred, target)
         tensor(1.0000)
 
     Example (multiclass case):
-        >>> pred = torch.tensor([[0.75, 0.05, 0.05, 0.05, 0.05],
+        >>> pred = B.tensor([[0.75, 0.05, 0.05, 0.05, 0.05],
         ...                      [0.05, 0.75, 0.05, 0.05, 0.05],
         ...                      [0.05, 0.05, 0.75, 0.05, 0.05],
         ...                      [0.05, 0.05, 0.05, 0.75, 0.05]])
-        >>> target = torch.tensor([0, 1, 3, 2])
+        >>> target = B.tensor([0, 1, 3, 2])
         >>> average_precision = BinnedAveragePrecision(num_classes=5, thresholds=10)
         >>> average_precision(pred, target)
         [tensor(1.0000), tensor(1.0000), tensor(0.2500), tensor(0.2500), tensor(-0.)]
@@ -272,18 +272,18 @@ class BinnedRecallAtFixedPrecision(BinnedPrecisionRecallCurve):
 
     Example (binary case):
         >>> from torchmetrics import BinnedRecallAtFixedPrecision
-        >>> pred = torch.tensor([0, 0.2, 0.5, 0.8])
-        >>> target = torch.tensor([0, 1, 1, 0])
+        >>> pred = B.tensor([0, 0.2, 0.5, 0.8])
+        >>> target = B.tensor([0, 1, 1, 0])
         >>> average_precision = BinnedRecallAtFixedPrecision(num_classes=1, thresholds=10, min_precision=0.5)
         >>> average_precision(pred, target)
         (tensor(1.0000), tensor(0.1111))
 
     Example (multiclass case):
-        >>> pred = torch.tensor([[0.75, 0.05, 0.05, 0.05, 0.05],
+        >>> pred = B.tensor([[0.75, 0.05, 0.05, 0.05, 0.05],
         ...                      [0.05, 0.75, 0.05, 0.05, 0.05],
         ...                      [0.05, 0.05, 0.75, 0.05, 0.05],
         ...                      [0.05, 0.05, 0.05, 0.75, 0.05]])
-        >>> target = torch.tensor([0, 1, 3, 2])
+        >>> target = B.tensor([0, 1, 3, 2])
         >>> average_precision = BinnedRecallAtFixedPrecision(num_classes=5, thresholds=10, min_precision=0.5)
         >>> average_precision(pred, target)   # doctest: +NORMALIZE_WHITESPACE
         (tensor([1.0000, 1.0000, 0.0000, 0.0000, 0.0000]),
@@ -315,8 +315,8 @@ class BinnedRecallAtFixedPrecision(BinnedPrecisionRecallCurve):
         if self.num_classes == 1:
             return _recall_at_precision(precisions, recalls, thresholds, self.min_precision)
 
-        recalls_at_p = torch.zeros(self.num_classes, device=recalls[0].device, dtype=recalls[0].dtype)
-        thresholds_at_p = torch.zeros(self.num_classes, device=thresholds[0].device, dtype=thresholds[0].dtype)
+        recalls_at_p = B.zeros(self.num_classes, device=recalls[0].device, dtype=recalls[0].dtype)
+        thresholds_at_p = B.zeros(self.num_classes, device=thresholds[0].device, dtype=thresholds[0].dtype)
         for i in range(self.num_classes):
             recalls_at_p[i], thresholds_at_p[i] = _recall_at_precision(
                 precisions[i], recalls[i], thresholds[i], self.min_precision

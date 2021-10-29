@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Tuple
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.utilities.checks import _check_same_shape
 
@@ -36,10 +36,10 @@ def _mean_absolute_percentage_error_update(
 
     _check_same_shape(preds, target)
 
-    abs_diff = torch.abs(preds - target)
-    abs_per_error = abs_diff / torch.clamp(torch.abs(target), min=epsilon)
+    abs_diff = B.abs(preds - target)
+    abs_per_error = abs_diff / B.clamp(B.abs(target), min=epsilon)
 
-    sum_abs_per_error = torch.sum(abs_per_error)
+    sum_abs_per_error = B.sum(abs_per_error)
 
     num_obs = target.numel()
 
@@ -55,8 +55,8 @@ def _mean_absolute_percentage_error_compute(sum_abs_per_error: Tensor, num_obs: 
         num_obs: Number of predictions or observations
 
     Example:
-        >>> target = torch.tensor([1, 10, 1e6])
-        >>> preds = torch.tensor([0.9, 15, 1.2e6])
+        >>> target = B.tensor([1, 10, 1e6])
+        >>> preds = B.tensor([0.9, 15, 1.2e6])
         >>> sum_abs_per_error, num_obs = _mean_absolute_percentage_error_update(preds, target)
         >>> _mean_absolute_percentage_error_compute(sum_abs_per_error, num_obs)
         tensor(0.2667)
@@ -80,8 +80,8 @@ def mean_absolute_percentage_error(preds: Tensor, target: Tensor) -> Tensor:
 
     Example:
         >>> from torchmetrics.functional import mean_absolute_percentage_error
-        >>> target = torch.tensor([1, 10, 1e6])
-        >>> preds = torch.tensor([0.9, 15, 1.2e6])
+        >>> target = B.tensor([1, 10, 1e6])
+        >>> preds = B.tensor([0.9, 15, 1.2e6])
         >>> mean_absolute_percentage_error(preds, target)
         tensor(0.2667)
     """

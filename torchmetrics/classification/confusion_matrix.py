@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Any, Optional
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.functional.classification.confusion_matrix import _confusion_matrix_compute, _confusion_matrix_update
 from torchmetrics.metric import Metric
@@ -65,16 +65,16 @@ class ConfusionMatrix(Metric):
 
     Example (binary data):
         >>> from torchmetrics import ConfusionMatrix
-        >>> target = torch.tensor([1, 1, 0, 0])
-        >>> preds = torch.tensor([0, 1, 0, 0])
+        >>> target = B.tensor([1, 1, 0, 0])
+        >>> preds = B.tensor([0, 1, 0, 0])
         >>> confmat = ConfusionMatrix(num_classes=2)
         >>> confmat(preds, target)
         tensor([[2., 0.],
                 [1., 1.]])
 
     Example (multiclass data):
-        >>> target = torch.tensor([2, 1, 0, 0])
-        >>> preds = torch.tensor([2, 1, 0, 1])
+        >>> target = B.tensor([2, 1, 0, 0])
+        >>> preds = B.tensor([2, 1, 0, 1])
         >>> confmat = ConfusionMatrix(num_classes=3)
         >>> confmat(preds, target)
         tensor([[1., 1., 0.],
@@ -82,8 +82,8 @@ class ConfusionMatrix(Metric):
                 [0., 0., 1.]])
 
     Example (multilabel data):
-        >>> target = torch.tensor([[0, 1, 0], [1, 0, 1]])
-        >>> preds = torch.tensor([[0, 0, 1], [1, 0, 1]])
+        >>> target = B.tensor([[0, 1, 0], [1, 0, 1]])
+        >>> preds = B.tensor([[0, 0, 1], [1, 0, 1]])
         >>> confmat = ConfusionMatrix(num_classes=3, multilabel=True)
         >>> confmat(preds, target)  # doctest: +NORMALIZE_WHITESPACE
         tensor([[[1., 0.], [0., 1.]],
@@ -118,7 +118,7 @@ class ConfusionMatrix(Metric):
         if self.normalize not in allowed_normalize:
             raise ValueError(f"Argument average needs to one of the following: {allowed_normalize}")
 
-        default = torch.zeros(num_classes, 2, 2) if multilabel else torch.zeros(num_classes, num_classes)
+        default = B.zeros(num_classes, 2, 2) if multilabel else B.zeros(num_classes, num_classes)
         self.add_state("confmat", default=default, dist_reduce_fx="sum")
 
     def update(self, preds: Tensor, target: Tensor) -> None:  # type: ignore

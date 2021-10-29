@@ -13,7 +13,7 @@
 # limitations under the License.
 from typing import Any, Callable, Optional
 
-from torch import Tensor, tensor
+from pangu.core.backend import  Tensor, tensor
 
 from torchmetrics.functional.audio.snr import snr
 from torchmetrics.metric import Metric
@@ -56,10 +56,10 @@ class SNR(Metric):
         average snr value
 
     Example:
-        >>> import torch
+        >>> import pangu.core.backend as B
         >>> from torchmetrics import SNR
-        >>> target = torch.tensor([3.0, -0.5, 2.0, 7.0])
-        >>> preds = torch.tensor([2.5, 0.0, 2.0, 8.0])
+        >>> target = B.tensor([3.0, -0.5, 2.0, 7.0])
+        >>> preds = B.tensor([2.5, 0.0, 2.0, 8.0])
         >>> snr = SNR()
         >>> snr_val = snr(preds, target)
         >>> snr_val

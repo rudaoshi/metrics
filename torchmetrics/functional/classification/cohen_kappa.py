@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Optional
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.functional.classification.confusion_matrix import _confusion_matrix_compute, _confusion_matrix_update
 
@@ -32,8 +32,8 @@ def _cohen_kappa_compute(confmat: Tensor, weights: Optional[str] = None) -> Tens
             - ``'quadratic'``: quadratic weighting
 
     Example:
-        >>> target = torch.tensor([1, 1, 0, 0])
-        >>> preds = torch.tensor([0, 1, 0, 0])
+        >>> target = B.tensor([1, 1, 0, 0])
+        >>> preds = B.tensor([0, 1, 0, 0])
         >>> confmat = _cohen_kappa_update(preds, target, num_classes=2)
         >>> _cohen_kappa_compute(confmat)
         tensor(0.5000)
@@ -47,22 +47,22 @@ def _cohen_kappa_compute(confmat: Tensor, weights: Optional[str] = None) -> Tens
     expected = sum1 @ sum0 / sum0.sum()  # outer product
 
     if weights is None:
-        w_mat = torch.ones_like(confmat).flatten()
+        w_mat = B.ones_like(confmat).flatten()
         w_mat[:: n_classes + 1] = 0
         w_mat = w_mat.reshape(n_classes, n_classes)
     elif weights in ("linear", "quadratic"):
-        w_mat = torch.zeros_like(confmat)
-        w_mat += torch.arange(n_classes, dtype=w_mat.dtype, device=w_mat.device)
+        w_mat = B.zeros_like(confmat)
+        w_mat += B.arange(n_classes, dtype=w_mat.dtype, device=w_mat.device)
         if weights == "linear":
-            w_mat = torch.abs(w_mat - w_mat.T)
+            w_mat = B.abs(w_mat - w_mat.T)
         else:
-            w_mat = torch.pow(w_mat - w_mat.T, 2.0)
+            w_mat = B.pow(w_mat - w_mat.T, 2.0)
     else:
         raise ValueError(
             f"Received {weights} for argument ``weights`` but should be either" " None, 'linear' or 'quadratic'"
         )
 
-    k = torch.sum(w_mat * confmat) / torch.sum(w_mat * expected)
+    k = B.sum(w_mat * confmat) / B.sum(w_mat * expected)
     return 1 - k
 
 
@@ -103,8 +103,8 @@ def cohen_kappa(
 
      Example:
          >>> from torchmetrics.functional import cohen_kappa
-         >>> target = torch.tensor([1, 1, 0, 0])
-         >>> preds = torch.tensor([0, 1, 0, 0])
+         >>> target = B.tensor([1, 1, 0, 0])
+         >>> preds = B.tensor([0, 1, 0, 0])
          >>> cohen_kappa(preds, target, num_classes=2)
          tensor(0.5000)
     """

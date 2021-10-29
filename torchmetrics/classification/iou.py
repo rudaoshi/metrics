@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Any, Optional
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.classification.confusion_matrix import ConfusionMatrix
 from torchmetrics.functional.classification.iou import _iou_from_confmat
@@ -69,8 +69,8 @@ class IoU(ConfusionMatrix):
 
     Example:
         >>> from torchmetrics import IoU
-        >>> target = torch.randint(0, 2, (10, 25, 25))
-        >>> pred = torch.tensor(target)
+        >>> target = B.randint(0, 2, (10, 25, 25))
+        >>> pred = B.tensor(target)
         >>> pred[2:5, 7:13, 9:15] = 1 - pred[2:5, 7:13, 9:15]
         >>> iou = IoU(num_classes=2)
         >>> iou(pred, target)

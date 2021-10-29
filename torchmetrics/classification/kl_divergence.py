@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Any, Callable, Optional
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.functional.classification.kl_divergence import _kld_compute, _kld_update
 from torchmetrics.metric import Metric
@@ -53,10 +53,10 @@ class KLDivergence(Metric):
         Half precision is only support on GPU for this metric
 
     Example:
-        >>> import torch
+        >>> import pangu.core.backend as B
         >>> from torchmetrics.functional import kl_divergence
-        >>> p = torch.tensor([[0.36, 0.48, 0.16]])
-        >>> q = torch.tensor([[1/3, 1/3, 1/3]])
+        >>> p = B.tensor([[0.36, 0.48, 0.16]])
+        >>> q = B.tensor([[1/3, 1/3, 1/3]])
         >>> kl_divergence(p, q)
         tensor(0.0853)
 
@@ -91,10 +91,10 @@ class KLDivergence(Metric):
         self.reduction = reduction
 
         if self.reduction in ["mean", "sum"]:
-            self.add_state("measures", torch.zeros(1), dist_reduce_fx="sum")
+            self.add_state("measures", B.zeros(1), dist_reduce_fx="sum")
         else:
             self.add_state("measures", [], dist_reduce_fx="cat")
-        self.add_state("total", torch.zeros(1), dist_reduce_fx="sum")
+        self.add_state("total", B.zeros(1), dist_reduce_fx="sum")
 
     def update(self, p: Tensor, q: Tensor) -> None:  # type: ignore
         measures, total = _kld_update(p, q, self.log_prob)

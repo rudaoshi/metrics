@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Tuple
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.utilities.checks import _check_same_shape
 
@@ -29,54 +29,54 @@ def _tweedie_deviance_score_update(preds: Tensor, targets: Tensor, power: float 
         power: see :func:`tweedie_deviance_score`
 
     Example:
-        >>> targets = torch.tensor([1.0, 2.0, 3.0, 4.0])
-        >>> preds = torch.tensor([4.0, 3.0, 2.0, 1.0])
+        >>> targets = B.tensor([1.0, 2.0, 3.0, 4.0])
+        >>> preds = B.tensor([4.0, 3.0, 2.0, 1.0])
         >>> _tweedie_deviance_score_update(preds, targets, power=2)
         (tensor(4.8333), tensor(4))
     """
     _check_same_shape(preds, targets)
 
-    zero_tensor = torch.zeros(preds.shape, device=preds.device)
+    zero_tensor = B.zeros(preds.shape, device=preds.device)
 
     if 0 < power < 1:
         raise ValueError(f"Deviance Score is not defined for power={power}.")
 
     if power == 0:
-        deviance_score = torch.pow(targets - preds, exponent=2)
+        deviance_score = B.pow(targets - preds, exponent=2)
     elif power == 1:
         # Poisson distribution
-        if torch.any(preds <= 0) or torch.any(targets < 0):
+        if B.any(preds <= 0) or B.any(targets < 0):
             raise ValueError(
                 f"For power={power}, 'preds' has to be strictly positive and 'targets' cannot be negative."
             )
 
-        deviance_score = 2 * (targets * torch.log(targets / preds) + preds - targets)
+        deviance_score = 2 * (targets * B.log(targets / preds) + preds - targets)
     elif power == 2:
         # Gamma distribution
-        if torch.any(preds <= 0) or torch.any(targets <= 0):
+        if B.any(preds <= 0) or B.any(targets <= 0):
             raise ValueError(f"For power={power}, both 'preds' and 'targets' have to be strictly positive.")
 
-        deviance_score = 2 * (torch.log(preds / targets) + (targets / preds) - 1)
+        deviance_score = 2 * (B.log(preds / targets) + (targets / preds) - 1)
     else:
         if power < 0:
-            if torch.any(preds <= 0):
+            if B.any(preds <= 0):
                 raise ValueError(f"For power={power}, 'preds' has to be strictly positive.")
         elif 1 < power < 2:
-            if torch.any(preds <= 0) or torch.any(targets < 0):
+            if B.any(preds <= 0) or B.any(targets < 0):
                 raise ValueError(
                     f"For power={power}, 'targets' has to be strictly positive and 'preds' cannot be negative."
                 )
         else:
-            if torch.any(preds <= 0) or torch.any(targets <= 0):
+            if B.any(preds <= 0) or B.any(targets <= 0):
                 raise ValueError(f"For power={power}, both 'preds' and 'targets' have to be strictly positive.")
 
-        term_1 = torch.pow(torch.max(targets, zero_tensor), 2 - power) / ((1 - power) * (2 - power))
-        term_2 = targets * torch.pow(preds, 1 - power) / (1 - power)
-        term_3 = torch.pow(preds, 2 - power) / (2 - power)
+        term_1 = B.pow(B.max(targets, zero_tensor), 2 - power) / ((1 - power) * (2 - power))
+        term_2 = targets * B.pow(preds, 1 - power) / (1 - power)
+        term_3 = B.pow(preds, 2 - power) / (2 - power)
         deviance_score = 2 * (term_1 - term_2 + term_3)
 
-    sum_deviance_score = torch.sum(deviance_score)
-    num_observations = torch.tensor(torch.numel(deviance_score), device=preds.device)
+    sum_deviance_score = B.sum(deviance_score)
+    num_observations = B.tensor(B.numel(deviance_score), device=preds.device)
 
     return sum_deviance_score, num_observations
 
@@ -89,8 +89,8 @@ def _tweedie_deviance_score_compute(sum_deviance_score: Tensor, num_observations
         num_observations: Number of observations encountered until now.
 
     Example:
-        >>> targets = torch.tensor([1.0, 2.0, 3.0, 4.0])
-        >>> preds = torch.tensor([4.0, 3.0, 2.0, 1.0])
+        >>> targets = B.tensor([1.0, 2.0, 3.0, 4.0])
+        >>> preds = B.tensor([4.0, 3.0, 2.0, 1.0])
         >>> sum_deviance_score, num_observations = _tweedie_deviance_score_update(preds, targets, power=2)
         >>> _tweedie_deviance_score_compute(sum_deviance_score, num_observations)
         tensor(1.2083)
@@ -129,8 +129,8 @@ def tweedie_deviance_score(preds: Tensor, targets: Tensor, power: float = 0.0) -
 
     Example:
         >>> from torchmetrics.functional import tweedie_deviance_score
-        >>> targets = torch.tensor([1.0, 2.0, 3.0, 4.0])
-        >>> preds = torch.tensor([4.0, 3.0, 2.0, 1.0])
+        >>> targets = B.tensor([1.0, 2.0, 3.0, 4.0])
+        >>> preds = B.tensor([4.0, 3.0, 2.0, 1.0])
         >>> tweedie_deviance_score(preds, targets, power=2)
         tensor(1.2083)
 

@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Any, Callable, Optional
 
-import torch
-from torch import Tensor, tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor, tensor
 
 from torchmetrics.functional.regression.symmetric_mean_absolute_percentage_error import (
     _symmetric_mean_absolute_percentage_error_compute,
@@ -48,8 +48,8 @@ class SymmetricMeanAbsolutePercentageError(Metric):
 
     Example:
         >>> from torchmetrics import SymmetricMeanAbsolutePercentageError
-        >>> target = torch.tensor([1, 10, 1e6])
-        >>> preds = torch.tensor([0.9, 15, 1.2e6])
+        >>> target = B.tensor([1, 10, 1e6])
+        >>> preds = B.tensor([0.9, 15, 1.2e6])
         >>> smape = SymmetricMeanAbsolutePercentageError()
         >>> smape(preds, target)
         tensor(0.2290)

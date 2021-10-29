@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Any, Callable, Optional
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.functional.regression.tweedie_deviance import (
     _tweedie_deviance_score_compute,
@@ -67,8 +67,8 @@ class TweedieDevianceScore(Metric):
 
     Example:
         >>> from torchmetrics import TweedieDevianceScore
-        >>> targets = torch.tensor([1.0, 2.0, 3.0, 4.0])
-        >>> preds = torch.tensor([4.0, 3.0, 2.0, 1.0])
+        >>> targets = B.tensor([1.0, 2.0, 3.0, 4.0])
+        >>> preds = B.tensor([4.0, 3.0, 2.0, 1.0])
         >>> deviance_score = TweedieDevianceScore(power=2)
         >>> deviance_score(preds, targets)
         tensor(1.2083)
@@ -97,8 +97,8 @@ class TweedieDevianceScore(Metric):
 
         self.power: float = power
 
-        self.add_state("sum_deviance_score", torch.tensor(0.0), dist_reduce_fx="sum")
-        self.add_state("num_observations", torch.tensor(0), dist_reduce_fx="sum")
+        self.add_state("sum_deviance_score", B.tensor(0.0), dist_reduce_fx="sum")
+        self.add_state("num_observations", B.tensor(0), dist_reduce_fx="sum")
 
     def update(self, preds: Tensor, targets: Tensor) -> None:  # type: ignore
         """Update metric states with predictions and targets.

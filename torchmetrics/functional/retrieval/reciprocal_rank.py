@@ -11,8 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import torch
-from torch import Tensor, tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor, tensor
 
 from torchmetrics.utilities.checks import _check_retrieval_functional_inputs
 
@@ -33,8 +33,8 @@ def retrieval_reciprocal_rank(preds: Tensor, target: Tensor) -> Tensor:
 
     Example:
         >>> from torchmetrics.functional import retrieval_reciprocal_rank
-        >>> preds = torch.tensor([0.2, 0.3, 0.5])
-        >>> target = torch.tensor([False, True, False])
+        >>> preds = B.tensor([0.2, 0.3, 0.5])
+        >>> target = B.tensor([False, True, False])
         >>> retrieval_reciprocal_rank(preds, target)
         tensor(0.5000)
     """
@@ -43,7 +43,7 @@ def retrieval_reciprocal_rank(preds: Tensor, target: Tensor) -> Tensor:
     if not target.sum():
         return tensor(0.0, device=preds.device)
 
-    target = target[torch.argsort(preds, dim=-1, descending=True)]
-    position = torch.nonzero(target).view(-1)
+    target = target[B.argsort(preds, dim=-1, descending=True)]
+    position = B.nonzero(target).view(-1)
     res = 1.0 / (position[0] + 1.0)
     return res

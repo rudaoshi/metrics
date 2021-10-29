@@ -13,7 +13,7 @@
 # limitations under the License.
 from typing import Any, Callable, Optional
 
-from torch import Tensor, tensor
+from pangu.core.backend import  Tensor, tensor
 
 from torchmetrics.functional.audio.pesq import pesq
 from torchmetrics.metric import Metric
@@ -63,10 +63,10 @@ class PESQ(Metric):
 
     Example:
         >>> from torchmetrics.audio import PESQ
-        >>> import torch
-        >>> g = torch.manual_seed(1)
-        >>> preds = torch.randn(8000)
-        >>> target = torch.randn(8000)
+        >>> import pangu.core.backend as B
+        >>> g = B.manual_seed(1)
+        >>> preds = B.randn(8000)
+        >>> target = B.randn(8000)
         >>> nb_pesq = PESQ(8000, 'nb')
         >>> nb_pesq(preds, target)
         tensor(2.2076)

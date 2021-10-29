@@ -13,10 +13,10 @@
 # limitations under the License.
 from typing import Any, Callable, List, Optional, Tuple, Union
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
-from torchmetrics.image.fid import NoTrainInceptionV3
+#from torchmetrics.image.fid import NoTrainInceptionV3
 from torchmetrics.metric import Metric
 from torchmetrics.utilities import rank_zero_warn
 from torchmetrics.utilities.data import dim_zero_cat
@@ -86,15 +86,15 @@ class IS(Metric):
         ValueError:
             If ``feature`` is set to an ``str`` or ``int`` and not one of ['logits_unbiased', 64, 192, 768, 2048]
         TypeError:
-            If ``feature`` is not an ``str``, ``int`` or ``torch.nn.Module``
+            If ``feature`` is not an ``str``, ``int`` or ``B.nn.Module``
 
     Example:
-        >>> import torch
-        >>> _ = torch.manual_seed(123)
+        >>> import pangu.core.backend as B
+        >>> _ = B.manual_seed(123)
         >>> from torchmetrics import IS
         >>> inception = IS()  # doctest: +SKIP
         >>> # generate some images
-        >>> imgs = torch.randint(0, 255, (100, 3, 299, 299), dtype=torch.uint8)  # doctest: +SKIP
+        >>> imgs = B.randint(0, 255, (100, 3, 299, 299), dtype=B.uint8)  # doctest: +SKIP
         >>> inception.update(imgs)  # doctest: +SKIP
         >>> inception.compute()  # doctest: +SKIP
         (tensor(1.0569), tensor(0.0113))
@@ -104,7 +104,7 @@ class IS(Metric):
 
     def __init__(
         self,
-        feature: Union[str, int, torch.nn.Module] = "logits_unbiased",
+        feature: Union[str, int, B.nn.Module] = "logits_unbiased",
         splits: int = 10,
         compute_on_step: bool = False,
         dist_sync_on_step: bool = False,
@@ -138,7 +138,7 @@ class IS(Metric):
                 )
 
             self.inception = NoTrainInceptionV3(name="inception-v3-compat", features_list=[str(feature)])
-        elif isinstance(feature, torch.nn.Module):
+        elif isinstance(feature, B.nn.Module):
             self.inception = feature
         else:
             raise TypeError("Got unknown input to argument `feature`")
@@ -158,7 +158,7 @@ class IS(Metric):
     def compute(self) -> Tuple[Tensor, Tensor]:
         features = dim_zero_cat(self.features)
         # random permute the features
-        idx = torch.randperm(features.shape[0])
+        idx = B.randperm(features.shape[0])
         features = features[idx]
 
         # calculate probs and logits
@@ -173,7 +173,7 @@ class IS(Metric):
         mean_prob = [p.mean(dim=0, keepdim=True) for p in prob]
         kl_ = [p * (log_p - m_p.log()) for p, log_p, m_p in zip(prob, log_prob, mean_prob)]
         kl_ = [k.sum(dim=1).mean().exp() for k in kl_]
-        kl = torch.stack(kl_)
+        kl = B.stack(kl_)
 
         # return mean and std
         return kl.mean(), kl.std()

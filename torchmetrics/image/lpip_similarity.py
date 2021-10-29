@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Any, Callable, List, Optional
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.metric import Metric
 from torchmetrics.utilities.imports import _LPIPS_AVAILABLE
@@ -23,7 +23,7 @@ if _LPIPS_AVAILABLE:
     from lpips import LPIPS as Lpips_backbone
 else:
 
-    class Lpips_backbone(torch.nn.Module):  # type: ignore
+    class Lpips_backbone(B.nn.Module):  # type: ignore
         pass
 
 
@@ -77,12 +77,12 @@ class LPIPS(Metric):
             If ``reduction`` is not one of ``"mean"`` or ``"sum"``
 
     Example:
-        >>> import torch
-        >>> _ = torch.manual_seed(123)
+        >>> import pangu.core.backend as B
+        >>> _ = B.manual_seed(123)
         >>> from torchmetrics import LPIPS
         >>> lpips = LPIPS(net_type='vgg')
-        >>> img1 = torch.rand(10, 3, 100, 100)
-        >>> img2 = torch.rand(10, 3, 100, 100)
+        >>> img1 = B.rand(10, 3, 100, 100)
+        >>> img2 = B.rand(10, 3, 100, 100)
         >>> lpips(img1, img2)
         tensor([0.3566], grad_fn=<DivBackward0>)
     """
@@ -126,8 +126,8 @@ class LPIPS(Metric):
             raise ValueError(f"Argument `reduction` must be one of {valid_reduction}, but got {reduction}")
         self.reduction = reduction
 
-        self.add_state("sum_scores", torch.zeros(1), dist_reduce_fx="sum")
-        self.add_state("total", torch.zeros(1), dist_reduce_fx="sum")
+        self.add_state("sum_scores", B.zeros(1), dist_reduce_fx="sum")
+        self.add_state("total", B.zeros(1), dist_reduce_fx="sum")
 
     def update(self, img1: Tensor, img2: Tensor) -> None:  # type: ignore
         """Update internal states with lpips score.

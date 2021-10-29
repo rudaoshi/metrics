@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Any, Callable, List, Optional, Tuple, Union
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.functional.classification.roc import _roc_compute, _roc_update
 from torchmetrics.metric import Metric
@@ -52,8 +52,8 @@ class ROC(Metric):
 
     Example (binary case):
         >>> from torchmetrics import ROC
-        >>> pred = torch.tensor([0, 1, 2, 3])
-        >>> target = torch.tensor([0, 1, 1, 1])
+        >>> pred = B.tensor([0, 1, 2, 3])
+        >>> target = B.tensor([0, 1, 1, 1])
         >>> roc = ROC(pos_label=1)
         >>> fpr, tpr, thresholds = roc(pred, target)
         >>> fpr
@@ -64,11 +64,11 @@ class ROC(Metric):
         tensor([4, 3, 2, 1, 0])
 
     Example (multiclass case):
-        >>> pred = torch.tensor([[0.75, 0.05, 0.05, 0.05],
+        >>> pred = B.tensor([[0.75, 0.05, 0.05, 0.05],
         ...                      [0.05, 0.75, 0.05, 0.05],
         ...                      [0.05, 0.05, 0.75, 0.05],
         ...                      [0.05, 0.05, 0.05, 0.75]])
-        >>> target = torch.tensor([0, 1, 3, 2])
+        >>> target = B.tensor([0, 1, 3, 2])
         >>> roc = ROC(num_classes=4)
         >>> fpr, tpr, thresholds = roc(pred, target)
         >>> fpr
@@ -82,11 +82,11 @@ class ROC(Metric):
          tensor([1.7500, 0.7500, 0.0500])]
 
     Example (multilabel case):
-        >>> pred = torch.tensor([[0.8191, 0.3680, 0.1138],
+        >>> pred = B.tensor([[0.8191, 0.3680, 0.1138],
         ...                      [0.3584, 0.7576, 0.1183],
         ...                      [0.2286, 0.3468, 0.1338],
         ...                      [0.8603, 0.0745, 0.1837]])
-        >>> target = torch.tensor([[1, 1, 0], [0, 1, 0], [0, 0, 0], [0, 1, 1]])
+        >>> target = B.tensor([[1, 1, 0], [0, 1, 0], [0, 0, 0], [0, 1, 1]])
         >>> roc = ROC(num_classes=3, pos_label=1)
         >>> fpr, tpr, thresholds = roc(pred, target)
         >>> fpr # doctest: +NORMALIZE_WHITESPACE
@@ -162,8 +162,8 @@ class ROC(Metric):
             thresholds:
                 thresholds used for computing false- and true postive rates
         """
-        preds = torch.cat(self.preds, dim=0)
-        target = torch.cat(self.target, dim=0)
+        preds = B.cat(self.preds, dim=0)
+        target = B.cat(self.target, dim=0)
         if not self.num_classes:
             raise ValueError(f"`num_classes` bas to be positive number, but got {self.num_classes}")
         return _roc_compute(preds, target, self.num_classes, self.pos_label)

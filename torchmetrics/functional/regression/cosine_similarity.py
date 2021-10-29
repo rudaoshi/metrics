@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Tuple
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.utilities.checks import _check_same_shape
 
@@ -47,8 +47,8 @@ def _cosine_similarity_compute(preds: Tensor, target: Tensor, reduction: str = "
             The method of reducing along the batch dimension using sum, mean or taking the individual scores
 
     Example:
-        >>> target = torch.tensor([[1, 2, 3, 4], [1, 2, 3, 4]])
-        >>> preds = torch.tensor([[1, 2, 3, 4], [-1, -2, -3, -4]])
+        >>> target = B.tensor([[1, 2, 3, 4], [1, 2, 3, 4]])
+        >>> preds = B.tensor([[1, 2, 3, 4], [-1, -2, -3, -4]])
         >>> preds, target = _cosine_similarity_update(preds, target)
         >>> _cosine_similarity_compute(preds, target, 'none')
         tensor([ 1.0000, -1.0000])
@@ -59,8 +59,8 @@ def _cosine_similarity_compute(preds: Tensor, target: Tensor, reduction: str = "
     target_norm = target.norm(dim=-1)
     similarity = dot_product / (preds_norm * target_norm)
     reduction_mapping = {
-        "sum": torch.sum,
-        "mean": torch.mean,
+        "sum": B.sum,
+        "mean": B.mean,
         "none": lambda x: x,
         None: lambda x: x,
     }
@@ -86,9 +86,9 @@ def cosine_similarity(preds: Tensor, target: Tensor, reduction: str = "sum") -> 
 
     Example:
         >>> from torchmetrics.functional.regression import cosine_similarity
-        >>> target = torch.tensor([[1, 2, 3, 4],
+        >>> target = B.tensor([[1, 2, 3, 4],
         ...                        [1, 2, 3, 4]])
-        >>> preds = torch.tensor([[1, 2, 3, 4],
+        >>> preds = B.tensor([[1, 2, 3, 4],
         ...                       [-1, -2, -3, -4]])
         >>> cosine_similarity(preds, target, 'none')
         tensor([ 1.0000, -1.0000])

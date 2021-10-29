@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Any, List, Optional
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.functional.classification.calibration_error import _ce_compute, _ce_update
 from torchmetrics.metric import Metric
@@ -85,7 +85,7 @@ class CalibrationError(Metric):
         if not isinstance(n_bins, int) or n_bins <= 0:
             raise ValueError(f"Expected argument `n_bins` to be a int larger than 0 but got {n_bins}")
         self.n_bins = n_bins
-        self.register_buffer("bin_boundaries", torch.linspace(0, 1, n_bins + 1))
+        self.register_buffer("bin_boundaries", B.linspace(0, 1, n_bins + 1))
         self.norm = norm
 
         self.add_state("confidences", [], dist_reduce_fx="cat")

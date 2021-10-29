@@ -11,8 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import torch
-from torch import Tensor, tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor, tensor
 
 from torchmetrics.utilities.checks import _check_retrieval_functional_inputs
 
@@ -43,7 +43,7 @@ def retrieval_average_precision(preds: Tensor, target: Tensor) -> Tensor:
     if not target.sum():
         return tensor(0.0, device=preds.device)
 
-    target = target[torch.argsort(preds, dim=-1, descending=True)]
-    positions = torch.arange(1, len(target) + 1, device=target.device, dtype=torch.float32)[target > 0]
-    res = torch.div((torch.arange(len(positions), device=positions.device, dtype=torch.float32) + 1), positions).mean()
+    target = target[B.argsort(preds, dim=-1, descending=True)]
+    positions = B.arange(1, len(target) + 1, device=target.device, dtype=B.float32)[target > 0]
+    res = B.div((B.arange(len(positions), device=positions.device, dtype=B.float32) + 1), positions).mean()
     return res

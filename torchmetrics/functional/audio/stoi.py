@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import numpy as np
-import torch
+import pangu.core.backend as B
 
 from torchmetrics.utilities.imports import _PYSTOI_AVAILABLE
 
@@ -20,7 +20,7 @@ if _PYSTOI_AVAILABLE:
     from pystoi import stoi as stoi_backend
 else:
     stoi_backend = None
-from torch import Tensor
+from pangu.core.backend import  Tensor
 
 from torchmetrics.utilities.checks import _check_same_shape
 
@@ -60,10 +60,10 @@ def stoi(preds: Tensor, target: Tensor, fs: int, extended: bool = False, keep_sa
 
     Example:
         >>> from torchmetrics.functional.audio import stoi
-        >>> import torch
-        >>> g = torch.manual_seed(1)
-        >>> preds = torch.randn(8000)
-        >>> target = torch.randn(8000)
+        >>> import pangu.core.backend as B
+        >>> g = B.manual_seed(1)
+        >>> preds = B.randn(8000)
+        >>> target = B.randn(8000)
         >>> stoi(preds, target, 8000).float()
         tensor(-0.0100)
 
@@ -89,14 +89,14 @@ def stoi(preds: Tensor, target: Tensor, fs: int, extended: bool = False, keep_sa
 
     if len(preds.shape) == 1:
         stoi_val_np = stoi_backend(target.detach().cpu().numpy(), preds.detach().cpu().numpy(), fs, extended)
-        stoi_val = torch.tensor(stoi_val_np)
+        stoi_val = B.tensor(stoi_val_np)
     else:
         preds_np = preds.reshape(-1, preds.shape[-1]).detach().cpu().numpy()
         target_np = target.reshape(-1, preds.shape[-1]).detach().cpu().numpy()
         stoi_val_np = np.empty(shape=(preds_np.shape[0]))
         for b in range(preds_np.shape[0]):
             stoi_val_np[b] = stoi_backend(target_np[b, :], preds_np[b, :], fs, extended)
-        stoi_val = torch.from_numpy(stoi_val_np)
+        stoi_val = B.from_numpy(stoi_val_np)
         stoi_val = stoi_val.reshape(preds.shape[:-1])
 
     if keep_same_device:

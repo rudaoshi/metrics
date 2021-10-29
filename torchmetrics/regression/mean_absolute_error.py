@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Any, Callable, Optional
 
-import torch
-from torch import Tensor, tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor, tensor
 
 from torchmetrics.functional.regression.mean_absolute_error import (
     _mean_absolute_error_compute,
@@ -42,8 +42,8 @@ class MeanAbsoluteError(Metric):
 
     Example:
         >>> from torchmetrics import MeanAbsoluteError
-        >>> target = torch.tensor([3.0, -0.5, 2.0, 7.0])
-        >>> preds = torch.tensor([2.5, 0.0, 2.0, 8.0])
+        >>> target = B.tensor([3.0, -0.5, 2.0, 7.0])
+        >>> preds = B.tensor([2.5, 0.0, 2.0, 8.0])
         >>> mean_absolute_error = MeanAbsoluteError()
         >>> mean_absolute_error(preds, target)
         tensor(0.5000)

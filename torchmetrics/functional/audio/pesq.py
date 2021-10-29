@@ -19,8 +19,8 @@ if _PESQ_AVAILABLE:
     import pesq as pesq_backend
 else:
     pesq_backend = None
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.utilities.checks import _check_same_shape
 
@@ -59,10 +59,10 @@ def pesq(preds: Tensor, target: Tensor, fs: int, mode: str, keep_same_device: bo
 
     Example:
         >>> from torchmetrics.functional.audio import pesq
-        >>> import torch
-        >>> g = torch.manual_seed(1)
-        >>> preds = torch.randn(8000)
-        >>> target = torch.randn(8000)
+        >>> import pangu.core.backend as B
+        >>> g = B.manual_seed(1)
+        >>> preds = B.randn(8000)
+        >>> target = B.randn(8000)
         >>> pesq(preds, target, 8000, 'nb')
         tensor(2.2076)
         >>> pesq(preds, target, 16000, 'wb')
@@ -84,14 +84,14 @@ def pesq(preds: Tensor, target: Tensor, fs: int, mode: str, keep_same_device: bo
 
     if preds.ndim == 1:
         pesq_val_np = pesq_backend.pesq(fs, target.detach().cpu().numpy(), preds.detach().cpu().numpy(), mode)
-        pesq_val = torch.tensor(pesq_val_np)
+        pesq_val = B.tensor(pesq_val_np)
     else:
         preds_np = preds.reshape(-1, preds.shape[-1]).detach().cpu().numpy()
         target_np = target.reshape(-1, preds.shape[-1]).detach().cpu().numpy()
         pesq_val_np = np.empty(shape=(preds_np.shape[0]))
         for b in range(preds_np.shape[0]):
             pesq_val_np[b] = pesq_backend.pesq(fs, target_np[b, :], preds_np[b, :], mode)
-        pesq_val = torch.from_numpy(pesq_val_np)
+        pesq_val = B.from_numpy(pesq_val_np)
         pesq_val = pesq_val.reshape(preds.shape[:-1])
 
     if keep_same_device:

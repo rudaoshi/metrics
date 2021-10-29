@@ -13,9 +13,8 @@
 # limitations under the License.
 from typing import List, Optional, Sequence, Tuple, Union
 
-import torch
-from torch import Tensor, tensor
-from torch.nn import functional as F
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor, tensor
 
 from torchmetrics.utilities import rank_zero_warn
 
@@ -28,12 +27,12 @@ def _binary_clf_curve(
 ) -> Tuple[Tensor, Tensor, Tensor]:
     """adapted from https://github.com/scikit-learn/scikit- learn/blob/master/sklearn/metrics/_ranking.py."""
     if sample_weights is not None and not isinstance(sample_weights, Tensor):
-        sample_weights = tensor(sample_weights, device=preds.device, dtype=torch.float)
+        sample_weights = tensor(sample_weights, device=preds.device, dtype=B.float)
 
     # remove class dimension if necessary
     if preds.ndim > target.ndim:
         preds = preds[:, 0]
-    desc_score_indices = torch.argsort(preds, descending=True)
+    desc_score_indices = B.argsort(preds, descending=True)
 
     preds = preds[desc_score_indices]
     target = target[desc_score_indices]
@@ -46,15 +45,15 @@ def _binary_clf_curve(
     # pred typically has many tied values. Here we extract
     # the indices associated with the distinct values. We also
     # concatenate a value for the end of the curve.
-    distinct_value_indices = torch.where(preds[1:] - preds[:-1])[0]
-    threshold_idxs = F.pad(distinct_value_indices, [0, 1], value=target.size(0) - 1)
-    target = (target == pos_label).to(torch.long)
-    tps = torch.cumsum(target * weight, dim=0)[threshold_idxs]
+    distinct_value_indices = B.where(preds[1:] - preds[:-1])[0]
+    threshold_idxs = B.pad(distinct_value_indices, [0, 1], value=target.size(0) - 1)
+    target = (target == pos_label).to(B.long)
+    tps = B.cumsum(target * weight, dim=0)[threshold_idxs]
 
     if sample_weights is not None:
         # express fps as a cumsum to ensure fps is increasing even in
         # the presence of floating point errors
-        fps = torch.cumsum((1 - target) * weight, dim=0)[threshold_idxs]
+        fps = B.cumsum((1 - target) * weight, dim=0)[threshold_idxs]
     else:
         fps = 1 + threshold_idxs - tps
 
@@ -143,14 +142,14 @@ def _precision_recall_curve_compute_single_class(
     recall = tps / tps[-1]
 
     # stop when full recall attained and reverse the outputs so recall is decreasing
-    last_ind = torch.where(tps == tps[-1])[0][0]
+    last_ind = B.where(tps == tps[-1])[0][0]
     sl = slice(0, last_ind.item() + 1)
 
     # need to call reversed explicitly, since including that to slice would
     # introduce negative strides that are not yet supported in pytorch
-    precision = torch.cat([reversed(precision[sl]), torch.ones(1, dtype=precision.dtype, device=precision.device)])
+    precision = B.cat([reversed(precision[sl]), B.ones(1, dtype=precision.dtype, device=precision.device)])
 
-    recall = torch.cat([reversed(recall[sl]), torch.zeros(1, dtype=recall.dtype, device=recall.device)])
+    recall = B.cat([reversed(recall[sl]), B.zeros(1, dtype=recall.dtype, device=recall.device)])
 
     thresholds = reversed(thresholds[sl]).detach().clone()  # type: ignore
 
@@ -222,8 +221,8 @@ def _precision_recall_curve_compute(
 
     Example:
         >>> # binary case
-        >>> preds = torch.tensor([0, 1, 2, 3])
-        >>> target = torch.tensor([0, 1, 1, 0])
+        >>> preds = B.tensor([0, 1, 2, 3])
+        >>> target = B.tensor([0, 1, 1, 0])
         >>> pos_label = 1
         >>> preds, target, num_classes, pos_label = _precision_recall_curve_update(preds, target, pos_label=pos_label)
         >>> precision, recall, thresholds = _precision_recall_curve_compute(preds, target, num_classes, pos_label)
@@ -235,11 +234,11 @@ def _precision_recall_curve_compute(
         tensor([1, 2, 3])
 
         >>> # multiclass case
-        >>> preds = torch.tensor([[0.75, 0.05, 0.05, 0.05, 0.05],
+        >>> preds = B.tensor([[0.75, 0.05, 0.05, 0.05, 0.05],
         ...                      [0.05, 0.75, 0.05, 0.05, 0.05],
         ...                      [0.05, 0.05, 0.75, 0.05, 0.05],
         ...                      [0.05, 0.05, 0.05, 0.75, 0.05]])
-        >>> target = torch.tensor([0, 1, 3, 2])
+        >>> target = B.tensor([0, 1, 3, 2])
         >>> num_classes = 5
         >>> preds, target, num_classes, pos_label = _precision_recall_curve_update(preds, target, num_classes)
         >>> precision, recall, thresholds = _precision_recall_curve_compute(preds, target, num_classes)
@@ -252,7 +251,7 @@ def _precision_recall_curve_compute(
         [tensor([0.7500]), tensor([0.7500]), tensor([0.0500, 0.7500]), tensor([0.0500, 0.7500]), tensor([0.0500])]
     """
 
-    with torch.no_grad():
+    with B.no_grad():
         if num_classes == 1:
             if pos_label is None:
                 pos_label = 1
@@ -304,8 +303,8 @@ def precision_recall_curve(
 
     Example (binary case):
         >>> from torchmetrics.functional import precision_recall_curve
-        >>> pred = torch.tensor([0, 1, 2, 3])
-        >>> target = torch.tensor([0, 1, 1, 0])
+        >>> pred = B.tensor([0, 1, 2, 3])
+        >>> target = B.tensor([0, 1, 1, 0])
         >>> precision, recall, thresholds = precision_recall_curve(pred, target, pos_label=1)
         >>> precision
         tensor([0.6667, 0.5000, 0.0000, 1.0000])
@@ -315,11 +314,11 @@ def precision_recall_curve(
         tensor([1, 2, 3])
 
     Example (multiclass case):
-        >>> pred = torch.tensor([[0.75, 0.05, 0.05, 0.05, 0.05],
+        >>> pred = B.tensor([[0.75, 0.05, 0.05, 0.05, 0.05],
         ...                      [0.05, 0.75, 0.05, 0.05, 0.05],
         ...                      [0.05, 0.05, 0.75, 0.05, 0.05],
         ...                      [0.05, 0.05, 0.05, 0.75, 0.05]])
-        >>> target = torch.tensor([0, 1, 3, 2])
+        >>> target = B.tensor([0, 1, 3, 2])
         >>> precision, recall, thresholds = precision_recall_curve(pred, target, num_classes=5)
         >>> precision   # doctest: +NORMALIZE_WHITESPACE
         [tensor([1., 1.]), tensor([1., 1.]), tensor([0.2500, 0.0000, 1.0000]),

@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Sequence, Tuple, Union
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.utilities.checks import _check_same_shape
 
@@ -31,12 +31,12 @@ def _explained_variance_update(preds: Tensor, target: Tensor) -> Tuple[int, Tens
     _check_same_shape(preds, target)
 
     n_obs = preds.size(0)
-    sum_error = torch.sum(target - preds, dim=0)
+    sum_error = B.sum(target - preds, dim=0)
     diff = target - preds
-    sum_squared_error = torch.sum(diff * diff, dim=0)
+    sum_squared_error = B.sum(diff * diff, dim=0)
 
-    sum_target = torch.sum(target, dim=0)
-    sum_squared_target = torch.sum(target * target, dim=0)
+    sum_target = B.sum(target, dim=0)
+    sum_squared_target = B.sum(target * target, dim=0)
 
     return n_obs, sum_error, sum_squared_error, sum_target, sum_squared_target
 
@@ -65,8 +65,8 @@ def _explained_variance_compute(
             * `'variance_weighted'` scores are weighted by their individual variances
 
     Example:
-        >>> target = torch.tensor([[0.5, 1], [-1, 1], [7, -6]])
-        >>> preds = torch.tensor([[0, 2], [-1, 2], [8, -5]])
+        >>> target = B.tensor([[0.5, 1], [-1, 1], [7, -6]])
+        >>> preds = B.tensor([[0, 2], [-1, 2], [8, -5]])
         >>> n_obs, sum_error, ss_error, sum_target, ss_target = _explained_variance_update(preds, target)
         >>> _explained_variance_compute(n_obs, sum_error, ss_error, sum_target, ss_target, multioutput='raw_values')
         tensor([0.9677, 1.0000])
@@ -82,7 +82,7 @@ def _explained_variance_compute(
     nonzero_numerator = numerator != 0
     nonzero_denominator = denominator != 0
     valid_score = nonzero_numerator & nonzero_denominator
-    output_scores = torch.ones_like(diff_avg)
+    output_scores = B.ones_like(diff_avg)
     output_scores[valid_score] = 1.0 - (numerator[valid_score] / denominator[valid_score])
     output_scores[nonzero_numerator & ~nonzero_denominator] = 0.0
 
@@ -91,10 +91,10 @@ def _explained_variance_compute(
     if multioutput == "raw_values":
         return output_scores
     if multioutput == "uniform_average":
-        return torch.mean(output_scores)
+        return B.mean(output_scores)
     if multioutput == "variance_weighted":
-        denom_sum = torch.sum(denominator)
-        return torch.sum(denominator / denom_sum * output_scores)
+        denom_sum = B.sum(denominator)
+        return B.sum(denominator / denom_sum * output_scores)
 
 
 def explained_variance(
@@ -116,13 +116,13 @@ def explained_variance(
 
     Example:
         >>> from torchmetrics.functional import explained_variance
-        >>> target = torch.tensor([3, -0.5, 2, 7])
-        >>> preds = torch.tensor([2.5, 0.0, 2, 8])
+        >>> target = B.tensor([3, -0.5, 2, 7])
+        >>> preds = B.tensor([2.5, 0.0, 2, 8])
         >>> explained_variance(preds, target)
         tensor(0.9572)
 
-        >>> target = torch.tensor([[0.5, 1], [-1, 1], [7, -6]])
-        >>> preds = torch.tensor([[0, 2], [-1, 2], [8, -5]])
+        >>> target = B.tensor([[0.5, 1], [-1, 1], [7, -6]])
+        >>> preds = B.tensor([[0, 2], [-1, 2], [8, -5]])
         >>> explained_variance(preds, target, multioutput='raw_values')
         tensor([0.9677, 1.0000])
     """

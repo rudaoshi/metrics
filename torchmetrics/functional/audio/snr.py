@@ -11,8 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.utilities.checks import _check_same_shape
 
@@ -40,8 +40,8 @@ def snr(preds: Tensor, target: Tensor, zero_mean: bool = False) -> Tensor:
 
     Example:
         >>> from torchmetrics.functional.audio import snr
-        >>> target = torch.tensor([3.0, -0.5, 2.0, 7.0])
-        >>> preds = torch.tensor([2.5, 0.0, 2.0, 8.0])
+        >>> target = B.tensor([3.0, -0.5, 2.0, 7.0])
+        >>> preds = B.tensor([2.5, 0.0, 2.0, 8.0])
         >>> snr_val = snr(preds, target)
         >>> snr_val
         tensor(16.1805)
@@ -52,15 +52,15 @@ def snr(preds: Tensor, target: Tensor, zero_mean: bool = False) -> Tensor:
 
     """
     _check_same_shape(preds, target)
-    EPS = torch.finfo(preds.dtype).eps
+    EPS = B.finfo(preds.dtype).eps
 
     if zero_mean:
-        target = target - torch.mean(target, dim=-1, keepdim=True)
-        preds = preds - torch.mean(preds, dim=-1, keepdim=True)
+        target = target - B.mean(target, dim=-1, keepdim=True)
+        preds = preds - B.mean(preds, dim=-1, keepdim=True)
 
     noise = target - preds
 
-    snr_value = (torch.sum(target ** 2, dim=-1) + EPS) / (torch.sum(noise ** 2, dim=-1) + EPS)
-    snr_value = 10 * torch.log10(snr_value)
+    snr_value = (B.sum(target ** 2, dim=-1) + EPS) / (B.sum(noise ** 2, dim=-1) + EPS)
+    snr_value = 10 * B.log10(snr_value)
 
     return snr_value

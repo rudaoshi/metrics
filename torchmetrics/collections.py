@@ -16,8 +16,8 @@ from collections import OrderedDict
 from copy import deepcopy
 from typing import Any, Dict, Hashable, Iterable, Optional, Sequence, Tuple, Union
 
-import torch
-from torch import nn
+import pangu.core.backend as B
+from pangu.core.backend import nn
 
 from torchmetrics.metric import Metric
 from torchmetrics.utilities import rank_zero_warn
@@ -58,11 +58,11 @@ class MetricCollection(nn.ModuleDict):
             If ``postfix`` is set and it is not a string.
 
     Example (input as list):
-        >>> import torch
+        >>> import pangu.core.backend as B
         >>> from pprint import pprint
         >>> from torchmetrics import MetricCollection, Accuracy, Precision, Recall
-        >>> target = torch.tensor([0, 2, 0, 2, 0, 1, 0, 2])
-        >>> preds = torch.tensor([2, 1, 2, 0, 1, 2, 2, 2])
+        >>> target = B.tensor([0, 2, 0, 2, 0, 1, 0, 2])
+        >>> preds = B.tensor([2, 1, 2, 0, 1, 2, 2, 2])
         >>> metrics = MetricCollection([Accuracy(),
         ...                             Precision(num_classes=3, average='macro'),
         ...                             Recall(num_classes=3, average='macro')])
@@ -95,12 +95,13 @@ class MetricCollection(nn.ModuleDict):
     ) -> None:
         super().__init__()
 
+        self._modules = self._sub_layers
+
         self.add_metrics(metrics, *additional_metrics)
 
         self.prefix = self._check_arg(prefix, "prefix")
         self.postfix = self._check_arg(postfix, "postfix")
 
-    @torch.jit.unused
     def forward(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         """Iteratively call forward for each metric.
 
@@ -233,3 +234,6 @@ class MetricCollection(nn.ModuleDict):
         if self.postfix:
             repr_str += f"{',' if not self.prefix else ''}\n  postfix={self.postfix}"
         return repr_str + "\n)"
+
+    def to(self, device):
+        pass

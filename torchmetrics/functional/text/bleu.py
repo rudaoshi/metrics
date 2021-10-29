@@ -15,12 +15,12 @@
 # Library Name: torchtext
 # Authors: torchtext authors and @sluks
 # Date: 2020-07-18
-# Link: https://pytorch.org/text/_modules/torchtext/data/metrics.html#bleu_score
+# Link: https://pyB.org/text/_modules/torchtext/data/metrics.html#bleu_score
 from collections import Counter
 from typing import Sequence, Tuple
 
-import torch
-from torch import Tensor, tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor, tensor
 
 
 def _count_ngram(ngram_input_list: Sequence[str], n_gram: int) -> Counter:
@@ -105,17 +105,17 @@ def _bleu_score_compute(
         return tensor(0.0, device=device)
 
     if smooth:
-        precision_scores = torch.div(
-            torch.add(numerator, torch.ones(n_gram, device=device)),
-            torch.add(denominator, torch.ones(n_gram, device=device)),
+        precision_scores = B.div(
+            B.add(numerator, B.ones(n_gram, device=device)),
+            B.add(denominator, B.ones(n_gram, device=device)),
         )
         precision_scores[0] = numerator[0] / denominator[0]
     else:
         precision_scores = numerator / denominator
 
-    log_precision_scores = tensor([1.0 / n_gram] * n_gram, device=device) * torch.log(precision_scores)
-    geometric_mean = torch.exp(torch.sum(log_precision_scores))
-    brevity_penalty = tensor(1.0, device=device) if trans_len > ref_len else torch.exp(1 - (ref_len / trans_len))
+    log_precision_scores = tensor([1.0 / n_gram] * n_gram, device=device) * B.log(precision_scores)
+    geometric_mean = B.exp(B.sum(log_precision_scores))
+    brevity_penalty = tensor(1.0, device=device) if trans_len > ref_len else B.exp(1 - (ref_len / trans_len))
     bleu = brevity_penalty * geometric_mean
 
     return bleu
@@ -159,10 +159,10 @@ def bleu_score(
 
     if len(translate_corpus) != len(reference_corpus):
         raise ValueError(f"Corpus has different size {len(translate_corpus)} != {len(reference_corpus)}")
-    numerator = torch.zeros(n_gram)
-    denominator = torch.zeros(n_gram)
-    trans_len = tensor(0, dtype=torch.float)
-    ref_len = tensor(0, dtype=torch.float)
+    numerator = B.zeros(n_gram)
+    denominator = B.zeros(n_gram)
+    trans_len = tensor(0, dtype=B.float)
+    ref_len = tensor(0, dtype=B.float)
 
     trans_len, ref_len = _bleu_score_update(
         reference_corpus, translate_corpus, numerator, denominator, trans_len, ref_len, n_gram

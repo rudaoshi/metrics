@@ -13,7 +13,7 @@
 # limitations under the License.
 from typing import Any, Callable, Optional
 
-from torch import Tensor, tensor
+from pangu.core.backend import  Tensor, tensor
 
 from torchmetrics.functional.retrieval.ndcg import retrieval_normalized_dcg
 from torchmetrics.retrieval.retrieval_metric import RetrievalMetric

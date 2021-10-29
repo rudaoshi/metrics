@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Tuple
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.utilities.checks import _check_same_shape
 
@@ -29,7 +29,7 @@ def _mean_squared_error_update(preds: Tensor, target: Tensor) -> Tuple[Tensor, i
     """
     _check_same_shape(preds, target)
     diff = preds - target
-    sum_squared_error = torch.sum(diff * diff)
+    sum_squared_error = B.sum(diff * diff)
     n_obs = target.numel()
     return sum_squared_error, n_obs
 
@@ -43,13 +43,13 @@ def _mean_squared_error_compute(sum_squared_error: Tensor, n_obs: int, squared: 
         squared: Returns RMSE value if set to False. default: True
 
     Example:
-        >>> preds = torch.tensor([0., 1, 2, 3])
-        >>> target = torch.tensor([0., 1, 2, 2])
+        >>> preds = B.tensor([0., 1, 2, 3])
+        >>> target = B.tensor([0., 1, 2, 2])
         >>> sum_squared_error, n_obs = _mean_squared_error_update(preds, target)
         >>> _mean_squared_error_compute(sum_squared_error, n_obs)
         tensor(0.2500)
     """
-    return sum_squared_error / n_obs if squared else torch.sqrt(sum_squared_error / n_obs)
+    return sum_squared_error / n_obs if squared else B.sqrt(sum_squared_error / n_obs)
 
 
 def mean_squared_error(preds: Tensor, target: Tensor, squared: bool = True) -> Tensor:
@@ -65,8 +65,8 @@ def mean_squared_error(preds: Tensor, target: Tensor, squared: bool = True) -> T
 
     Example:
         >>> from torchmetrics.functional import mean_squared_error
-        >>> x = torch.tensor([0., 1, 2, 3])
-        >>> y = torch.tensor([0., 1, 2, 2])
+        >>> x = B.tensor([0., 1, 2, 3])
+        >>> y = B.tensor([0., 1, 2, 2])
         >>> mean_squared_error(x, y)
         tensor(0.2500)
     """

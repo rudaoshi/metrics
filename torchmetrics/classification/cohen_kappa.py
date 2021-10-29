@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Any, Optional
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.functional.classification.cohen_kappa import _cohen_kappa_compute, _cohen_kappa_update
 from torchmetrics.metric import Metric
@@ -70,8 +70,8 @@ class CohenKappa(Metric):
 
     Example:
         >>> from torchmetrics import CohenKappa
-        >>> target = torch.tensor([1, 1, 0, 0])
-        >>> preds = torch.tensor([0, 1, 0, 0])
+        >>> target = B.tensor([1, 1, 0, 0])
+        >>> preds = B.tensor([0, 1, 0, 0])
         >>> cohenkappa = CohenKappa(num_classes=2)
         >>> cohenkappa(preds, target)
         tensor(0.5000)
@@ -102,7 +102,7 @@ class CohenKappa(Metric):
         if self.weights not in allowed_weights:
             raise ValueError(f"Argument weights needs to one of the following: {allowed_weights}")
 
-        self.add_state("confmat", default=torch.zeros(num_classes, num_classes), dist_reduce_fx="sum")
+        self.add_state("confmat", default=B.zeros(num_classes, num_classes), dist_reduce_fx="sum")
 
     def update(self, preds: Tensor, target: Tensor) -> None:  # type: ignore
         """Update state with predictions and targets.

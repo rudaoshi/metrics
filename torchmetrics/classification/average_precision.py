@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Any, List, Optional, Union
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.functional.classification.average_precision import (
     _average_precision_compute,
@@ -67,18 +67,18 @@ class AveragePrecision(Metric):
 
     Example (binary case):
         >>> from torchmetrics import AveragePrecision
-        >>> pred = torch.tensor([0, 1, 2, 3])
-        >>> target = torch.tensor([0, 1, 1, 1])
+        >>> pred = B.tensor([0, 1, 2, 3])
+        >>> target = B.tensor([0, 1, 1, 1])
         >>> average_precision = AveragePrecision(pos_label=1)
         >>> average_precision(pred, target)
         tensor(1.)
 
     Example (multiclass case):
-        >>> pred = torch.tensor([[0.75, 0.05, 0.05, 0.05, 0.05],
+        >>> pred = B.tensor([[0.75, 0.05, 0.05, 0.05, 0.05],
         ...                      [0.05, 0.75, 0.05, 0.05, 0.05],
         ...                      [0.05, 0.05, 0.75, 0.05, 0.05],
         ...                      [0.05, 0.05, 0.05, 0.75, 0.05]])
-        >>> target = torch.tensor([0, 1, 3, 2])
+        >>> target = B.tensor([0, 1, 3, 2])
         >>> average_precision = AveragePrecision(num_classes=5, average=None)
         >>> average_precision(pred, target)
         [tensor(1.), tensor(1.), tensor(0.2500), tensor(0.2500), tensor(nan)]

@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Optional, Tuple
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.utilities.data import select_topk, to_onehot
 from torchmetrics.utilities.enums import DataType
@@ -386,7 +386,7 @@ def _input_format_classification(
 
     # Convert half precision tensors to full precision, as not all ops are supported
     # for example, min() is not supported
-    if preds.dtype == torch.float16:
+    if preds.dtype == B.float16:
         preds = preds.float()
 
     case = _check_classification_inputs(
@@ -462,9 +462,9 @@ def _input_format_classification_one_hot(
 
     if preds.ndim == target.ndim + 1:
         # multi class probabilities
-        preds = torch.argmax(preds, dim=1)
+        preds = B.argmax(preds, dim=1)
 
-    if preds.ndim == target.ndim and preds.dtype in (torch.long, torch.int) and num_classes > 1 and not multilabel:
+    if preds.ndim == target.ndim and preds.dtype in (B.long, B.int) and num_classes > 1 and not multilabel:
         # multi-class
         preds = to_onehot(preds, num_classes=num_classes)
         target = to_onehot(target, num_classes=num_classes)
@@ -499,8 +499,8 @@ def _check_retrieval_functional_inputs(
             or not of the correct ``dtypes``.
 
     Returns:
-        preds: as torch.float32
-        target: as torch.long if not floating point else torch.float32
+        preds: as B.float32
+        target: as B.long if not floating point else B.float32
     """
     if preds.shape != target.shape:
         raise ValueError("`preds` and `target` must be of the same shape")
@@ -530,9 +530,9 @@ def _check_retrieval_inputs(
             or not of the correct ``dtypes``.
 
     Returns:
-        indexes: as torch.long
-        preds: as torch.float32
-        target: as torch.long
+        indexes: as B.long
+        preds: as B.float32
+        target: as B.long
     """
     if indexes.shape != preds.shape or preds.shape != target.shape:
         raise ValueError("`indexes`, `preds` and `target` must be of the same shape")
@@ -542,7 +542,7 @@ def _check_retrieval_inputs(
             "`indexes`, `preds` and `target` must be non-empty and non-scalar tensors",
         )
 
-    if indexes.dtype is not torch.long:
+    if indexes.dtype is not B.long:
         raise ValueError("`indexes` must be a tensor of long integers")
 
     preds, target = _check_retrieval_target_and_prediction_types(
@@ -569,7 +569,7 @@ def _check_retrieval_target_and_prediction_types(
             If ``preds`` and ``target`` don't have the same shape, if they are empty
             or not of the correct ``dtypes``.
     """
-    if target.dtype not in (torch.bool, torch.long, torch.int) and not torch.is_floating_point(target):
+    if target.dtype not in (B.bool, B.long, B.int) and not B.is_floating_point(target):
         raise ValueError("`target` must be a tensor of booleans, integers or floats")
 
     if not preds.is_floating_point():

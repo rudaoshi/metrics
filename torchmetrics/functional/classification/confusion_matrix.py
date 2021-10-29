@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Optional
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.utilities import rank_zero_warn
 from torchmetrics.utilities.checks import _input_format_classification
@@ -39,13 +39,13 @@ def _confusion_matrix_update(
         preds = preds.argmax(dim=1)
         target = target.argmax(dim=1)
     if multilabel:
-        unique_mapping = ((2 * target + preds) + 4 * torch.arange(num_classes, device=preds.device)).flatten()
+        unique_mapping = ((2 * target + preds) + 4 * B.arange(num_classes, device=preds.device)).flatten()
         minlength = 4 * num_classes
     else:
-        unique_mapping = (target.view(-1) * num_classes + preds.view(-1)).to(torch.long)
+        unique_mapping = (target.view(-1) * num_classes + preds.view(-1)).to(B.long)
         minlength = num_classes ** 2
 
-    bins = torch.bincount(unique_mapping, minlength=minlength)
+    bins = B.bincount(unique_mapping, minlength=minlength)
     if multilabel:
         confmat = bins.reshape(num_classes, 2, 2)
     else:
@@ -66,16 +66,16 @@ def _confusion_matrix_compute(confmat: Tensor, normalize: Optional[str] = None) 
 
     Example:
         >>> # binary case
-        >>> target = torch.tensor([1, 1, 0, 0])
-        >>> preds = torch.tensor([0, 1, 0, 0])
+        >>> target = B.tensor([1, 1, 0, 0])
+        >>> preds = B.tensor([0, 1, 0, 0])
         >>> confmat = _confusion_matrix_update(preds, target, num_classes=2)
         >>> _confusion_matrix_compute(confmat)
         tensor([[2, 0],
                 [1, 1]])
 
         >>> # multiclass case
-        >>> target = torch.tensor([2, 1, 0, 0])
-        >>> preds = torch.tensor([2, 1, 0, 1])
+        >>> target = B.tensor([2, 1, 0, 0])
+        >>> preds = B.tensor([2, 1, 0, 1])
         >>> confmat = _confusion_matrix_update(preds, target, num_classes=3)
         >>> _confusion_matrix_compute(confmat)
         tensor([[1, 1, 0],
@@ -83,8 +83,8 @@ def _confusion_matrix_compute(confmat: Tensor, normalize: Optional[str] = None) 
                 [0, 0, 1]])
 
         >>> # multilabel case
-        >>> target = torch.tensor([[0, 1, 0], [1, 0, 1]])
-        >>> preds = torch.tensor([[0, 0, 1], [1, 0, 1]])
+        >>> target = B.tensor([[0, 1, 0], [1, 0, 1]])
+        >>> preds = B.tensor([[0, 0, 1], [1, 0, 1]])
         >>> confmat = _confusion_matrix_update(preds, target, num_classes=3, multilabel=True)
         >>> _confusion_matrix_compute(confmat)  # doctest: +NORMALIZE_WHITESPACE
         tensor([[[1, 0], [0, 1]],
@@ -104,9 +104,9 @@ def _confusion_matrix_compute(confmat: Tensor, normalize: Optional[str] = None) 
         elif normalize == "all":
             confmat = confmat / confmat.sum()
 
-        nan_elements = confmat[torch.isnan(confmat)].nelement()
+        nan_elements = confmat[B.isnan(confmat)].nelement()
         if nan_elements != 0:
-            confmat[torch.isnan(confmat)] = 0
+            confmat[B.isnan(confmat)] = 0
             rank_zero_warn(f"{nan_elements} nan values found in confusion matrix have been replaced with zeros.")
     return confmat
 
@@ -154,16 +154,16 @@ def confusion_matrix(
 
     Example (binary data):
         >>> from torchmetrics import ConfusionMatrix
-        >>> target = torch.tensor([1, 1, 0, 0])
-        >>> preds = torch.tensor([0, 1, 0, 0])
+        >>> target = B.tensor([1, 1, 0, 0])
+        >>> preds = B.tensor([0, 1, 0, 0])
         >>> confmat = ConfusionMatrix(num_classes=2)
         >>> confmat(preds, target)
         tensor([[2., 0.],
                 [1., 1.]])
 
     Example (multiclass data):
-        >>> target = torch.tensor([2, 1, 0, 0])
-        >>> preds = torch.tensor([2, 1, 0, 1])
+        >>> target = B.tensor([2, 1, 0, 0])
+        >>> preds = B.tensor([2, 1, 0, 1])
         >>> confmat = ConfusionMatrix(num_classes=3)
         >>> confmat(preds, target)
         tensor([[1., 1., 0.],
@@ -171,8 +171,8 @@ def confusion_matrix(
                 [0., 0., 1.]])
 
     Example (multilabel data):
-        >>> target = torch.tensor([[0, 1, 0], [1, 0, 1]])
-        >>> preds = torch.tensor([[0, 0, 1], [1, 0, 1]])
+        >>> target = B.tensor([[0, 1, 0], [1, 0, 1]])
+        >>> preds = B.tensor([[0, 0, 1], [1, 0, 1]])
         >>> confmat = ConfusionMatrix(num_classes=3, multilabel=True)
         >>> confmat(preds, target)  # doctest: +NORMALIZE_WHITESPACE
         tensor([[[1., 0.], [0., 1.]],

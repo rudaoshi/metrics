@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Any, Callable, Optional
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.functional.classification.matthews_corrcoef import (
     _matthews_corrcoef_compute,
@@ -66,8 +66,8 @@ class MatthewsCorrcoef(Metric):
 
     Example:
         >>> from torchmetrics import MatthewsCorrcoef
-        >>> target = torch.tensor([1, 1, 0, 0])
-        >>> preds = torch.tensor([0, 1, 0, 0])
+        >>> target = B.tensor([1, 1, 0, 0])
+        >>> preds = B.tensor([0, 1, 0, 0])
         >>> matthews_corrcoef = MatthewsCorrcoef(num_classes=2)
         >>> matthews_corrcoef(preds, target)
         tensor(0.5774)
@@ -94,7 +94,7 @@ class MatthewsCorrcoef(Metric):
         self.num_classes = num_classes
         self.threshold = threshold
 
-        self.add_state("confmat", default=torch.zeros(num_classes, num_classes), dist_reduce_fx="sum")
+        self.add_state("confmat", default=B.zeros(num_classes, num_classes), dist_reduce_fx="sum")
 
     def update(self, preds: Tensor, target: Tensor) -> None:  # type: ignore
         """Update state with predictions and targets.

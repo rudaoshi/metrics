@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Optional
 
-import torch
-from torch import Tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor
 
 from torchmetrics.functional.pairwise.helpers import _check_input, _reduce_distance_matrix
 
@@ -31,9 +31,9 @@ def _pairwise_cosine_similarity_update(
     """
     x, y, zero_diagonal = _check_input(x, y, zero_diagonal)
 
-    norm = torch.norm(x, p=2, dim=1)
+    norm = B.norm(x, p=2, dim=1)
     x /= norm.unsqueeze(1)
-    norm = torch.norm(y, p=2, dim=1)
+    norm = B.norm(y, p=2, dim=1)
     y /= norm.unsqueeze(1)
 
     distance = x @ y.T
@@ -67,10 +67,10 @@ def pairwise_cosine_similarity(
         A ``[N,N]`` matrix of distances if only ``x`` is given, else a ``[N,M]`` matrix
 
     Example:
-        >>> import torch
+        >>> import pangu.core.backend as B
         >>> from torchmetrics.functional import pairwise_cosine_similarity
-        >>> x = torch.tensor([[2, 3], [3, 5], [5, 8]], dtype=torch.float32)
-        >>> y = torch.tensor([[1, 0], [2, 1]], dtype=torch.float32)
+        >>> x = B.tensor([[2, 3], [3, 5], [5, 8]], dtype=B.float32)
+        >>> y = B.tensor([[1, 0], [2, 1]], dtype=B.float32)
         >>> pairwise_cosine_similarity(x, y)
         tensor([[0.5547, 0.8682],
                 [0.5145, 0.8437],

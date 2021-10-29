@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Any, Optional, Sequence, Tuple, Union
 
-import torch
-from torch import Tensor, tensor
+import pangu.core.backend as B
+from pangu.core.backend import  Tensor, tensor
 
 from torchmetrics.functional.image.psnr import _psnr_compute, _psnr_update
 from torchmetrics.metric import Metric
@@ -58,8 +58,8 @@ class PSNR(Metric):
     Example:
         >>> from torchmetrics import PSNR
         >>> psnr = PSNR()
-        >>> preds = torch.tensor([[0.0, 1.0], [2.0, 3.0]])
-        >>> target = torch.tensor([[3.0, 2.0], [1.0, 0.0]])
+        >>> preds = B.tensor([[0.0, 1.0], [2.0, 3.0]])
+        >>> target = B.tensor([[3.0, 2.0], [1.0, 0.0]])
         >>> psnr(preds, target)
         tensor(2.5527)
 
@@ -98,13 +98,13 @@ class PSNR(Metric):
 
         if data_range is None:
             if dim is not None:
-                # Maybe we could use `torch.amax(target, dim=dim) - torch.amin(target, dim=dim)` in PyTorch 1.7 to
+                # Maybe we could use `B.amax(target, dim=dim) - B.amin(target, dim=dim)` in PyTorch 1.7 to
                 # calculate `data_range` in the future.
                 raise ValueError("The `data_range` must be given when `dim` is not None.")
 
             self.data_range = None
-            self.add_state("min_target", default=tensor(0.0), dist_reduce_fx=torch.min)
-            self.add_state("max_target", default=tensor(0.0), dist_reduce_fx=torch.max)
+            self.add_state("min_target", default=tensor(0.0), dist_reduce_fx=B.min)
+            self.add_state("max_target", default=tensor(0.0), dist_reduce_fx=B.max)
         else:
             self.add_state("data_range", default=tensor(float(data_range)), dist_reduce_fx="mean")
         self.base = base
@@ -142,6 +142,6 @@ class PSNR(Metric):
             sum_squared_error = self.sum_squared_error
             total = self.total
         else:
-            sum_squared_error = torch.cat([values.flatten() for values in self.sum_squared_error])
-            total = torch.cat([values.flatten() for values in self.total])
+            sum_squared_error = B.cat([values.flatten() for values in self.sum_squared_error])
+            total = B.cat([values.flatten() for values in self.total])
         return _psnr_compute(sum_squared_error, total, data_range, base=self.base, reduction=self.reduction)

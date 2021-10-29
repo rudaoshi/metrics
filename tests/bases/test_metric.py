@@ -17,8 +17,8 @@ from collections import OrderedDict
 import cloudpickle
 import numpy as np
 import pytest
-import torch
-from torch import Tensor, nn, tensor
+import pangu.core.backend as torch
+from pangu.core.backend import Tensor, nn, tensor
 
 from tests.helpers import _LIGHTNING_GREATER_EQUAL_1_3, seed_all
 from tests.helpers.testers import DummyListMetric, DummyMetric, DummyMetricMultiOutput, DummyMetricSum
