@@ -14,7 +14,8 @@
 from typing import List, Optional, Sequence, Tuple, Union
 
 import pangu.core.backend as B
-from pangu.core.backend import  Tensor, tensor
+import pangu.core.backend.nn.functional as F
+from pangu.core.backend import Tensor, tensor
 
 from torchmetrics.utilities import rank_zero_warn
 
@@ -46,7 +47,7 @@ def _binary_clf_curve(
     # the indices associated with the distinct values. We also
     # concatenate a value for the end of the curve.
     distinct_value_indices = B.where(preds[1:] - preds[:-1])[0]
-    threshold_idxs = B.pad(distinct_value_indices, [0, 1], value=target.size(0) - 1)
+    threshold_idxs = F.pad(distinct_value_indices, [0, 1], value=target.size(0) - 1)
     target = (target == pos_label).to(B.long)
     tps = B.cumsum(target * weight, dim=0)[threshold_idxs]
 

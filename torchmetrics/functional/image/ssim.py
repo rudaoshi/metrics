@@ -14,6 +14,7 @@
 from typing import Optional, Sequence, Tuple
 
 import pangu.core.backend as B
+import pangu.core.backend.nn.functional as F
 from pangu.core.backend import Tensor
 
 from torchmetrics.utilities.checks import _check_same_shape
@@ -148,8 +149,8 @@ def _ssim_compute(
     pad_h = (kernel_size[0] - 1) // 2
     pad_w = (kernel_size[1] - 1) // 2
 
-    preds = B.pad(preds, (pad_h, pad_h, pad_w, pad_w), mode="reflect")
-    target = B.pad(target, (pad_h, pad_h, pad_w, pad_w), mode="reflect")
+    preds = F.pad(preds, (pad_h, pad_h, pad_w, pad_w), mode="reflect")
+    target = F.pad(target, (pad_h, pad_h, pad_w, pad_w), mode="reflect")
 
     input_list = B.cat((preds, target, preds * preds, target * target, preds * target))  # (5 * B, C, H, W)
     outputs = B.conv2d(input_list, kernel, groups=channel)

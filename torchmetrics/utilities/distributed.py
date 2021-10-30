@@ -14,7 +14,7 @@
 from typing import Any, List, Optional
 
 import pangu.core.backend as B
-#import pangu.core.backend.nn.functional as F
+import pangu.core.backend.nn.functional as F
 from pangu.core.backend import Tensor
 
 
@@ -136,7 +136,7 @@ def gather_all_tensors(result: Tensor, group: Optional[Any] = None) -> List[Tens
     for val in reversed(pad_by):
         pad_dims.append(0)
         pad_dims.append(val.item())
-    result_padded = B.pad(result, pad_dims)
+    result_padded = F.pad(result, pad_dims)
     gathered_result = [B.zeros_like(result_padded) for _ in range(world_size)]
     B.distributed.all_gather(gathered_result, result_padded, group)
     for idx, item_size in enumerate(local_sizes):

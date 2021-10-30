@@ -205,6 +205,7 @@ def _reduce_stat_scores(
         zero_division: The value to use for the score if denominator equals zero.
     """
     numerator, denominator = numerator.float(), denominator.float()
+
     zero_div_mask = denominator == 0
     ignore_mask = denominator < 0
 
